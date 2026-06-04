@@ -2,8 +2,8 @@ name: Sync Vendor Skills
 
 on:
   schedule:
-    - cron: '0 20 * * *' # 每天 UTC 20:00 (北京时间 04:00)
-  workflow_dispatch: # 手动触发
+    - cron: '0 20 * * *' # daily at UTC 20:00 (Beijing 04:00)
+  workflow_dispatch:
 
 permissions:
   contents: write

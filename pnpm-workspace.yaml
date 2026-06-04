@@ -1,5 +1,5 @@
 allowBuilds:
-  esbuild: true
+  esbuild: false
   simple-git-hooks: false
 minimumReleaseAgeExclude:
   - '@clack/core@1.4.1'

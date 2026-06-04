@@ -20,6 +20,8 @@ jobs:
 
       - name: Set pnpm
         uses: pnpm/action-setup@v4
+        with:
+          version: latest
 
       - name: Set Node
         uses: actions/setup-node@v4

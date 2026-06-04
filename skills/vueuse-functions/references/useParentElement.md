@@ -49,6 +49,6 @@ onMounted(() => {
 
 ```ts
 export declare function useParentElement(
-  element?: MaybeRefOrGetter<HTMLElement | SVGElement | null | undefined>
+  element?: MaybeRefOrGetter<HTMLElement | SVGElement | null | undefined>,
 ): Readonly<ShallowRef<HTMLElement | SVGElement | null | undefined>>
 ```

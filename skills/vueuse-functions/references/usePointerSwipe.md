@@ -18,7 +18,9 @@ const { isSwiping, direction } = usePointerSwipe(el)
 </script>
 
 <template>
-  <div ref="el">Swipe here</div>
+  <div ref="el">
+    Swipe here
+  </div>
 </template>
 ```
 
@@ -73,6 +75,6 @@ export interface UsePointerSwipeReturn {
  */
 export declare function usePointerSwipe(
   target: MaybeRefOrGetter<HTMLElement | null | undefined>,
-  options?: UsePointerSwipeOptions
+  options?: UsePointerSwipeOptions,
 ): UsePointerSwipeReturn
 ```

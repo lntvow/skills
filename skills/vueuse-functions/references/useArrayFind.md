@@ -45,6 +45,6 @@ export type UseArrayFindReturn<T = any> = ComputedRef<T | undefined>
  */
 export declare function useArrayFind<T>(
   list: MaybeRefOrGetter<MaybeRefOrGetter<T>[]>,
-  fn: (element: T, index: number, array: MaybeRefOrGetter<T>[]) => boolean
+  fn: (element: T, index: number, array: MaybeRefOrGetter<T>[]) => boolean,
 ): UseArrayFindReturn<T>
 ```

@@ -54,6 +54,6 @@ export type UseArrayMapReturn<T = any> = ComputedRef<T[]>
  */
 export declare function useArrayMap<T, U = T>(
   list: MaybeRefOrGetter<MaybeRefOrGetter<T>[]>,
-  fn: (element: T, index: number, array: T[]) => U
+  fn: (element: T, index: number, array: T[]) => U,
 ): UseArrayMapReturn<U>
 ```

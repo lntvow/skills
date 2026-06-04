@@ -74,6 +74,6 @@ export interface UseElementHoverOptions extends ConfigurableWindow {
 }
 export declare function useElementHover(
   el: MaybeRefOrGetter<EventTarget | null | undefined>,
-  options?: UseElementHoverOptions
+  options?: UseElementHoverOptions,
 ): ShallowRef<boolean>
 ```

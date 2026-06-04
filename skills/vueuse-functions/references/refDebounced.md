@@ -72,7 +72,7 @@ export type RefDebouncedReturn<T = any> = Readonly<Ref<T>>
 export declare function refDebounced<T>(
   value: Ref<T>,
   ms?: MaybeRefOrGetter<number>,
-  options?: DebounceFilterOptions
+  options?: DebounceFilterOptions,
 ): RefDebouncedReturn<T>
 /** @deprecated use `refDebounced` instead */
 export declare const debouncedRef: typeof refDebounced

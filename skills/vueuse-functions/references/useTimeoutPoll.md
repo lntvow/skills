@@ -42,6 +42,6 @@ export interface UseTimeoutPollOptions {
 export declare function useTimeoutPoll(
   fn: () => Awaitable<void>,
   interval: MaybeRefOrGetter<number>,
-  options?: UseTimeoutFnOptions
+  options?: UseTimeoutFnOptions,
 ): Pausable
 ```

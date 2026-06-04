@@ -13,7 +13,15 @@ Reactive [SpeechRecognition](https://developer.mozilla.org/en-US/docs/Web/API/Sp
 ```ts
 import { useSpeechRecognition } from '@vueuse/core'
 
-const { isSupported, isListening, isFinal, result, confidence, start, stop } = useSpeechRecognition()
+const {
+  isSupported,
+  isListening,
+  isFinal,
+  result,
+  confidence,
+  start,
+  stop,
+} = useSpeechRecognition()
 ```
 
 The `confidence` ref tracks the [confidence value](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognitionAlternative/confidence) of the latest result, between 0 and 1.
@@ -85,5 +93,7 @@ export interface UseSpeechRecognitionReturn extends Supportable {
  * @see https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition SpeechRecognition
  * @param options
  */
-export declare function useSpeechRecognition(options?: UseSpeechRecognitionOptions): UseSpeechRecognitionReturn
+export declare function useSpeechRecognition(
+  options?: UseSpeechRecognitionOptions,
+): UseSpeechRecognitionReturn
 ```

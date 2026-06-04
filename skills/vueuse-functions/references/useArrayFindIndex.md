@@ -54,6 +54,6 @@ export type UseArrayFindIndexReturn = ComputedRef<number>
  */
 export declare function useArrayFindIndex<T>(
   list: MaybeRefOrGetter<MaybeRefOrGetter<T>[]>,
-  fn: (element: T, index: number, array: MaybeRefOrGetter<T>[]) => unknown
+  fn: (element: T, index: number, array: MaybeRefOrGetter<T>[]) => unknown,
 ): UseArrayFindIndexReturn
 ```

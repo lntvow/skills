@@ -18,7 +18,7 @@ const obj = ref('vue-use')
 // changing the value from some external store/composables
 obj.value = 'VueUse'
 
-watchImmediate(obj, updated => {
+watchImmediate(obj, (updated) => {
   console.log(updated) // Console.log will be logged twice
 })
 ```
@@ -29,16 +29,16 @@ watchImmediate(obj, updated => {
 export declare function watchImmediate<T>(
   source: WatchSource<T>,
   cb: WatchCallback<T, T | undefined>,
-  options?: Omit<WatchOptions<true>, 'immediate'>
+  options?: Omit<WatchOptions<true>, "immediate">,
 ): WatchHandle
 export declare function watchImmediate<T extends Readonly<MultiWatchSources>>(
   source: [...T],
   cb: WatchCallback<MapSources<T>, MapOldSources<T, true>>,
-  options?: Omit<WatchOptions<true>, 'immediate'>
+  options?: Omit<WatchOptions<true>, "immediate">,
 ): WatchHandle
 export declare function watchImmediate<T extends object>(
   source: T,
   cb: WatchCallback<T, T | undefined>,
-  options?: Omit<WatchOptions<true>, 'immediate'>
+  options?: Omit<WatchOptions<true>, "immediate">,
 ): WatchHandle
 ```

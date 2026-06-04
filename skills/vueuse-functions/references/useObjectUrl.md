@@ -24,7 +24,7 @@ function onFileChange(event) {
 </script>
 
 <template>
-  <input type="file" @change="onFileChange" />
+  <input type="file" @change="onFileChange">
 
   <a :href="url">Open file</a>
 </template>
@@ -50,6 +50,6 @@ function onFileChange(event) {
  * @param object
  */
 export declare function useObjectUrl(
-  object: MaybeRefOrGetter<Blob | MediaSource | null | undefined>
+  object: MaybeRefOrGetter<Blob | MediaSource | null | undefined>,
 ): Readonly<ShallowRef<string | undefined, string | undefined>>
 ```

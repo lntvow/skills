@@ -25,7 +25,7 @@ tsdown --no-treeshake
 ```ts
 export default defineConfig({
   entry: ['src/index.ts'],
-  treeshake: true, // Default
+  treeshake: true,  // Default
 })
 ```
 
@@ -34,7 +34,6 @@ export default defineConfig({
 ### With Tree Shaking
 
 **Source:**
-
 ```ts
 // src/util.ts
 export function unused() {
@@ -51,7 +50,6 @@ hello(1)
 ```
 
 **Output:**
-
 ```js
 // dist/index.mjs
 function hello(x) {
@@ -65,7 +63,6 @@ hello(1)
 ### Without Tree Shaking
 
 **Output:**
-
 ```js
 // dist/index.mjs
 function unused() {
@@ -139,7 +136,7 @@ Or specify files with side effects:
 ```ts
 export default defineConfig({
   treeshake: {
-    moduleSideEffects: id => {
+    moduleSideEffects: (id) => {
       // Preserve side effects for polyfills
       return id.includes('polyfill')
     },
@@ -163,9 +160,9 @@ export default defineConfig({
 ### Development Build
 
 ```ts
-export default defineConfig(options => ({
+export default defineConfig((options) => ({
   entry: ['src/index.ts'],
-  treeshake: !options.watch, // Disable in dev
+  treeshake: !options.watch,  // Disable in dev
 }))
 ```
 
@@ -175,8 +172,12 @@ export default defineConfig(options => ({
 export default defineConfig({
   entry: ['src/index.ts'],
   treeshake: {
-    moduleSideEffects: id => {
-      return id.includes('.css') || id.includes('polyfill') || id.includes('side-effect')
+    moduleSideEffects: (id) => {
+      return (
+        id.includes('.css') ||
+        id.includes('polyfill') ||
+        id.includes('side-effect')
+      )
     },
   },
 })
@@ -194,7 +195,6 @@ export default defineConfig({
 ```
 
 Users can import only what they need:
-
 ```ts
 import { onlyWhatINeed } from 'my-utils'
 ```
@@ -226,7 +226,7 @@ import { onlyWhatINeed } from 'my-utils'
 During development to see all code:
 
 ```ts
-export default defineConfig(options => ({
+export default defineConfig((options) => ({
   treeshake: !options.watch,
 }))
 ```
@@ -313,7 +313,7 @@ import { add } from './utils'
 ```ts
 // polyfill.ts - has side effects
 if (!Array.prototype.at) {
-  Array.prototype.at = function (index) {
+  Array.prototype.at = function(index) {
     // polyfill implementation
   }
 }

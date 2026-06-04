@@ -25,7 +25,7 @@ import { useFavicon, usePreferredDark } from '@vueuse/core'
 import { computed } from 'vue'
 
 const isDark = usePreferredDark()
-const favicon = computed(() => (isDark.value ? 'dark.png' : 'light.png'))
+const favicon = computed(() => isDark.value ? 'dark.png' : 'light.png')
 
 useFavicon(favicon)
 ```
@@ -48,7 +48,9 @@ export interface UseFaviconOptions extends ConfigurableDocument {
   baseUrl?: string
   rel?: string
 }
-export type UseFaviconReturn = ComputedRef<string | null | undefined> | Ref<string | null | undefined>
+export type UseFaviconReturn =
+  | ComputedRef<string | null | undefined>
+  | Ref<string | null | undefined>
 /**
  * Reactive favicon.
  *
@@ -58,10 +60,10 @@ export type UseFaviconReturn = ComputedRef<string | null | undefined> | Ref<stri
  */
 export declare function useFavicon(
   newIcon: ReadonlyRefOrGetter<string | null | undefined>,
-  options?: UseFaviconOptions
+  options?: UseFaviconOptions,
 ): ComputedRef<string | null | undefined>
 export declare function useFavicon(
   newIcon?: MaybeRef<string | null | undefined>,
-  options?: UseFaviconOptions
+  options?: UseFaviconOptions,
 ): Ref<string | null | undefined>
 ```

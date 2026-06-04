@@ -95,7 +95,7 @@ Use `shouldEmit` to validate before emitting. Return `false` to prevent the emit
 
 ```ts
 const data = useVModel(props, 'modelValue', emit, {
-  shouldEmit: value => {
+  shouldEmit: (value) => {
     // Only emit if value is valid
     return value.length > 0
   },
@@ -159,16 +159,24 @@ export interface UseVModelOptions<T, Passive extends boolean = false> {
  *
  * @__NO_SIDE_EFFECTS__
  */
-export declare function useVModel<P extends object, K extends keyof P, Name extends string>(
+export declare function useVModel<
+  P extends object,
+  K extends keyof P,
+  Name extends string,
+>(
   props: P,
   key?: K,
   emit?: (name: Name, ...args: any[]) => void,
-  options?: UseVModelOptions<P[K], false>
+  options?: UseVModelOptions<P[K], false>,
 ): WritableComputedRef<P[K]>
-export declare function useVModel<P extends object, K extends keyof P, Name extends string>(
+export declare function useVModel<
+  P extends object,
+  K extends keyof P,
+  Name extends string,
+>(
   props: P,
   key?: K,
   emit?: (name: Name, ...args: any[]) => void,
-  options?: UseVModelOptions<P[K], true>
+  options?: UseVModelOptions<P[K], true>,
 ): Ref<UnwrapRef<P[K]>>
 ```

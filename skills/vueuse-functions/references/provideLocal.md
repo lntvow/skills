@@ -19,7 +19,7 @@ const injectedValue = injectLocal('MyInjectionKey') // injectedValue === 1
 
 ## Type Declarations
 
-````ts
+```ts
 export type ProvideLocalReturn = void
 /**
  * On the basis of `provide`, it is allowed to directly call inject to obtain the value after call provide in the same component.
@@ -32,6 +32,6 @@ export type ProvideLocalReturn = void
  */
 export declare function provideLocal<T, K = LocalProvidedKey<T>>(
   key: K,
-  value: K extends InjectionKey<infer V> ? V : T
+  value: K extends InjectionKey<infer V> ? V : T,
 ): ProvideLocalReturn
-````
+```

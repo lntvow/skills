@@ -17,7 +17,10 @@ import { nextTick, shallowRef } from 'vue'
 
 const source = shallowRef('foo')
 
-const { stop, ignoreUpdates } = watchIgnorable(source, v => console.log(`Changed to ${v}!`))
+const { stop, ignoreUpdates } = watchIgnorable(
+  source,
+  v => console.log(`Changed to ${v}!`),
+)
 
 source.value = 'bar'
 await nextTick() // logs: Changed to bar!
@@ -53,7 +56,10 @@ import { nextTick, shallowRef } from 'vue'
 
 const source = shallowRef('foo')
 
-const { ignorePrevAsyncUpdates } = watchIgnorable(source, v => console.log(`Changed to ${v}!`))
+const { ignorePrevAsyncUpdates } = watchIgnorable(
+  source,
+  v => console.log(`Changed to ${v}!`),
+)
 
 source.value = 'bar'
 await nextTick() // logs: Changed to bar!
@@ -85,10 +91,13 @@ export interface WatchIgnorableReturn {
   ignorePrevAsyncUpdates: IgnoredPrevAsyncUpdates
   stop: WatchStopHandle
 }
-export declare function watchIgnorable<T, Immediate extends Readonly<boolean> = false>(
+export declare function watchIgnorable<
+  T,
+  Immediate extends Readonly<boolean> = false,
+>(
   source: WatchSource<T>,
   cb: WatchCallback<T, Immediate extends true ? T | undefined : T>,
-  options?: WatchWithFilterOptions<Immediate>
+  options?: WatchWithFilterOptions<Immediate>,
 ): WatchIgnorableReturn
 export declare function watchIgnorable<
   T extends Readonly<MultiWatchSources>,
@@ -96,12 +105,15 @@ export declare function watchIgnorable<
 >(
   sources: [...T],
   cb: WatchCallback<MapSources<T>, MapOldSources<T, Immediate>>,
-  options?: WatchWithFilterOptions<Immediate>
+  options?: WatchWithFilterOptions<Immediate>,
 ): WatchIgnorableReturn
-export declare function watchIgnorable<T extends object, Immediate extends Readonly<boolean> = false>(
+export declare function watchIgnorable<
+  T extends object,
+  Immediate extends Readonly<boolean> = false,
+>(
   source: T,
   cb: WatchCallback<T, Immediate extends true ? T | undefined : T>,
-  options?: WatchWithFilterOptions<Immediate>
+  options?: WatchWithFilterOptions<Immediate>,
 ): WatchIgnorableReturn
 /** @deprecated use `watchIgnorable` instead */
 export declare const ignorableWatch: typeof watchIgnorable

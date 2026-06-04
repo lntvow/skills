@@ -28,11 +28,7 @@ import { useSortable } from '@vueuse/integrations/useSortable'
 import { shallowRef, useTemplateRef } from 'vue'
 
 const el = useTemplateRef('el')
-const list = shallowRef([
-  { id: 1, name: 'a' },
-  { id: 2, name: 'b' },
-  { id: 3, name: 'c' },
-])
+const list = shallowRef([{ id: 1, name: 'a' }, { id: 2, name: 'b' }, { id: 3, name: 'c' }])
 
 useSortable(el, list)
 </script>
@@ -54,11 +50,7 @@ import { useSortable } from '@vueuse/integrations/useSortable'
 import { shallowRef, useTemplateRef } from 'vue'
 
 const el = useTemplateRef('el')
-const list = shallowRef([
-  { id: 1, name: 'a' },
-  { id: 2, name: 'b' },
-  { id: 3, name: 'c' },
-])
+const list = shallowRef([{ id: 1, name: 'a' }, { id: 2, name: 'b' }, { id: 3, name: 'c' }])
 
 const animation = 200
 
@@ -90,11 +82,7 @@ option('animation', animation)
 import { useSortable } from '@vueuse/integrations/useSortable'
 import { shallowRef } from 'vue'
 
-const list = shallowRef([
-  { id: 1, name: 'a' },
-  { id: 2, name: 'b' },
-  { id: 3, name: 'c' },
-])
+const list = shallowRef([{ id: 1, name: 'a' }, { id: 2, name: 'b' }, { id: 3, name: 'c' }])
 
 useSortable('#dv', list)
 </script>
@@ -136,8 +124,12 @@ You can also access the helper functions like `start`, `stop`, and `option` from
 ```vue
 <template>
   <UseSortable v-slot="{ stop, start }" v-model="list">
-    <button @click="stop()">Stop Sorting</button>
-    <button @click="start()">Start Sorting</button>
+    <button @click="stop()">
+      Stop Sorting
+    </button>
+    <button @click="start()">
+      Start Sorting
+    </button>
     <div v-for="item in list" :key="item.id">
       {{ item.name }}
     </div>
@@ -187,7 +179,7 @@ If you want to handle the `onUpdate` yourself, you can pass in `onUpdate` parame
 import { moveArrayElement, useSortable } from '@vueuse/integrations/useSortable'
 
 useSortable(el, list, {
-  onUpdate: e => {
+  onUpdate: (e) => {
     // do something
     moveArrayElement(list, e.oldIndex, e.newIndex, e)
     // nextTick required here as moveArrayElement is executed in a microtask
@@ -195,7 +187,7 @@ useSortable(el, list, {
     nextTick(() => {
       /* do something */
     })
-  },
+  }
 })
 ```
 
@@ -226,7 +218,10 @@ export interface UseSortableReturn {
    * @param name a Sortable.Options property.
    * @param value a value.
    */
-  option: (<K extends keyof Sortable.Options>(name: K, value: Sortable.Options[K]) => void) &
+  option: (<K extends keyof Sortable.Options>(
+    name: K,
+    value: Sortable.Options[K],
+  ) => void) &
     (<K extends keyof Sortable.Options>(name: K) => Sortable.Options[K])
 }
 export interface UseSortableOptions extends Options, ConfigurableDocument {
@@ -247,12 +242,12 @@ export interface UseSortableOptions extends Options, ConfigurableDocument {
 export declare function useSortable<T>(
   selector: string,
   list: MaybeRef<T[]>,
-  options?: UseSortableOptions
+  options?: UseSortableOptions,
 ): UseSortableReturn
 export declare function useSortable<T>(
   el: MaybeRefOrGetter<MaybeElement>,
   list: MaybeRef<T[]>,
-  options?: UseSortableOptions
+  options?: UseSortableOptions,
 ): UseSortableReturn
 /**
  * Inserts a element into the DOM at a given index.
@@ -261,7 +256,11 @@ export declare function useSortable<T>(
  * @param {number} index
  * @see https://github.com/Alfred-Skyblue/vue-draggable-plus/blob/a3829222095e1949bf2c9a20979d7b5930e66f14/src/utils/index.ts#L81C1-L94C2
  */
-export declare function insertNodeAt(parentElement: Element, element: Element, index: number): void
+export declare function insertNodeAt(
+  parentElement: Element,
+  element: Element,
+  index: number,
+): void
 /**
  * Removes a node from the DOM.
  * @param {Node} node
@@ -272,6 +271,6 @@ export declare function moveArrayElement<T>(
   list: MaybeRef<T[]>,
   from: number,
   to: number,
-  e?: Sortable.SortableEvent | null
+  e?: Sortable.SortableEvent | null,
 ): void
 ```

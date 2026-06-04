@@ -53,16 +53,25 @@ const subject = new Subject()
 
 // setup()
 const subjectRef = useSubject(subject, {
-  onError: err => {
+  onError: (err) => {
     console.log(err.message) // "oops"
   },
-})
+},)
 ```
 
 ## Type Declarations
 
 ```ts
-export interface UseSubjectOptions<I = undefined> extends Omit<UseObservableOptions<I>, 'initialValue'> {}
-export declare function useSubject<H>(subject: BehaviorSubject<H>, options?: UseSubjectOptions): Ref<H>
-export declare function useSubject<H>(subject: Subject<H>, options?: UseSubjectOptions): Ref<H | undefined>
+export interface UseSubjectOptions<I = undefined> extends Omit<
+  UseObservableOptions<I>,
+  "initialValue"
+> {}
+export declare function useSubject<H>(
+  subject: BehaviorSubject<H>,
+  options?: UseSubjectOptions,
+): Ref<H>
+export declare function useSubject<H>(
+  subject: Subject<H>,
+  options?: UseSubjectOptions,
+): Ref<H | undefined>
 ```

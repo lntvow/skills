@@ -54,6 +54,6 @@ export type UseArraySomeReturn = ComputedRef<boolean>
  */
 export declare function useArraySome<T>(
   list: MaybeRefOrGetter<MaybeRefOrGetter<T>[]>,
-  fn: (element: T, index: number, array: MaybeRefOrGetter<T>[]) => unknown
+  fn: (element: T, index: number, array: MaybeRefOrGetter<T>[]) => unknown,
 ): UseArraySomeReturn
 ```

@@ -60,7 +60,7 @@ intervalMs.value = 500
 import { useInterval } from '@vueuse/core'
 
 useInterval(1000, {
-  callback: count => {
+  callback: (count) => {
     console.log(`Tick ${count}`)
   },
 })
@@ -91,7 +91,9 @@ export interface UseIntervalControls {
   counter: ShallowRef<number>
   reset: () => void
 }
-export type UseIntervalReturn = Readonly<ShallowRef<number>> | Readonly<UseIntervalControls & Pausable>
+export type UseIntervalReturn =
+  | Readonly<ShallowRef<number>>
+  | Readonly<UseIntervalControls & Pausable>
 /**
  * Reactive counter increases on every interval
  *
@@ -101,10 +103,10 @@ export type UseIntervalReturn = Readonly<ShallowRef<number>> | Readonly<UseInter
  */
 export declare function useInterval(
   interval?: MaybeRefOrGetter<number>,
-  options?: UseIntervalOptions<false>
+  options?: UseIntervalOptions<false>,
 ): Readonly<ShallowRef<number>>
 export declare function useInterval(
   interval: MaybeRefOrGetter<number>,
-  options: UseIntervalOptions<true>
+  options: UseIntervalOptions<true>,
 ): Readonly<UseIntervalControls & Pausable>
 ```

@@ -53,11 +53,11 @@ import { useGamepad } from '@vueuse/core'
 // ---cut---
 const { gamepads, onConnected, onDisconnected } = useGamepad()
 
-onConnected(index => {
+onConnected((index) => {
   console.log(`${gamepads.value[index].id} connected`)
 })
 
-onDisconnected(index => {
+onDisconnected((index) => {
   console.log(`${index} disconnected`)
 })
 ```
@@ -122,7 +122,8 @@ In other frameworks or plain Vue, you can wrap your usage component with a `<Cli
 ## Type Declarations
 
 ```ts
-export interface UseGamepadOptions extends ConfigurableWindow, ConfigurableNavigator {}
+export interface UseGamepadOptions
+  extends ConfigurableWindow, ConfigurableNavigator {}
 export interface UseGamepadReturn extends Supportable, Pausable {
   onConnected: EventHookOn<number>
   onDisconnected: EventHookOn<number>
@@ -131,7 +132,9 @@ export interface UseGamepadReturn extends Supportable, Pausable {
 /**
  * Maps a standard standard gamepad to an Xbox 360 Controller.
  */
-export declare function mapGamepadToXbox360Controller(gamepad: Ref<Gamepad | undefined>): ComputedRef<{
+export declare function mapGamepadToXbox360Controller(
+  gamepad: Ref<Gamepad | undefined>,
+): ComputedRef<{
   buttons: {
     a: GamepadButton
     b: GamepadButton
@@ -167,5 +170,7 @@ export declare function mapGamepadToXbox360Controller(gamepad: Ref<Gamepad | und
   back: GamepadButton
   start: GamepadButton
 } | null>
-export declare function useGamepad(options?: UseGamepadOptions): UseGamepadReturn
+export declare function useGamepad(
+  options?: UseGamepadOptions,
+): UseGamepadReturn
 ```

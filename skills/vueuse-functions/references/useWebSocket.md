@@ -161,7 +161,7 @@ const { status, data, send, open, close } = useWebSocket('ws://websocketurl', {
 ## Type Declarations
 
 ```ts
-export type WebSocketStatus = 'OPEN' | 'CONNECTING' | 'CLOSED'
+export type WebSocketStatus = "OPEN" | "CONNECTING" | "CLOSED"
 export type WebSocketHeartbeatMessage = string | ArrayBuffer | Blob
 export interface UseWebSocketOptions {
   onConnected?: (ws: WebSocket) => void
@@ -268,7 +268,7 @@ export interface UseWebSocketReturn<T> {
   /**
    * Closes the websocket connection gracefully.
    */
-  close: WebSocket['close']
+  close: WebSocket["close"]
   /**
    * Reopen the websocket connection.
    * If there the current one is active, will close it before opening a new one.
@@ -294,6 +294,6 @@ export interface UseWebSocketReturn<T> {
  */
 export declare function useWebSocket<Data = any>(
   url: MaybeRefOrGetter<string | URL | undefined>,
-  options?: UseWebSocketOptions
+  options?: UseWebSocketOptions,
 ): UseWebSocketReturn<Data>
 ```

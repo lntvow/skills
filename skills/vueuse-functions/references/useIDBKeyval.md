@@ -88,6 +88,6 @@ export interface UseIDBKeyvalReturn<T> {
 export declare function useIDBKeyval<T>(
   key: IDBValidKey,
   initialValue: MaybeRefOrGetter<T>,
-  options?: UseIDBOptions<T>
+  options?: UseIDBOptions<T>,
 ): UseIDBKeyvalReturn<T>
 ```

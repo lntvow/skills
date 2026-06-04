@@ -34,10 +34,9 @@ export default defineConfig({
 })
 ```
 
-**Compatibility:** ✅ Most unplugin-\* plugins work
+**Compatibility:** ✅ Most unplugin-* plugins work
 
 **Examples:**
-
 - `unplugin-vue-components`
 - `unplugin-auto-import`
 - `unplugin-icons`
@@ -113,16 +112,24 @@ import PluginC from 'plugin-c'
 
 export default defineConfig({
   entry: ['src/index.ts'],
-  plugins: [PluginA(), PluginB({ option: true }), PluginC()],
+  plugins: [
+    PluginA(),
+    PluginB({ option: true }),
+    PluginC(),
+  ],
 })
 ```
 
 ### Conditional Plugins
 
 ```ts
-export default defineConfig(options => ({
+export default defineConfig((options) => ({
   entry: ['src/index.ts'],
-  plugins: [SomePlugin(), options.watch && DevPlugin(), !options.watch && ProdPlugin()].filter(Boolean),
+  plugins: [
+    SomePlugin(),
+    options.watch && DevPlugin(),
+    !options.watch && ProdPlugin(),
+  ].filter(Boolean),
 }))
 ```
 
@@ -167,7 +174,7 @@ export default defineConfig({
   plugins: [
     replace({
       'process.env.NODE_ENV': JSON.stringify('production'),
-      '__VERSION__': JSON.stringify('1.0.0'),
+      __VERSION__: JSON.stringify('1.0.0'),
     }),
   ],
 })
@@ -311,9 +318,9 @@ Plugins run in the order they're defined:
 ```ts
 export default defineConfig({
   plugins: [
-    PluginA(), // Runs first
-    PluginB(), // Runs second
-    PluginC(), // Runs last
+    PluginA(),  // Runs first
+    PluginB(),  // Runs second
+    PluginC(),  // Runs last
   ],
 })
 ```

@@ -48,6 +48,6 @@ const qrcode = useQRCode(text)
  */
 export declare function useQRCode(
   text: MaybeRefOrGetter<string>,
-  options?: QRCode.QRCodeToDataURLOptions
+  options?: QRCode.QRCodeToDataURLOptions,
 ): ShallowRef<string, string>
 ```

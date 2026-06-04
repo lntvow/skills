@@ -34,7 +34,7 @@ useIpcRendererOn('custom-event', (event, ...args) => {
 export declare function useIpcRendererOn(
   ipcRenderer: IpcRenderer,
   channel: string,
-  listener: IpcRendererListener
+  listener: IpcRendererListener,
 ): IpcRenderer
 /**
  * Listens to channel, when a new message arrives listener would be called with listener(event, args...).
@@ -45,5 +45,8 @@ export declare function useIpcRendererOn(
  * @see https://www.electronjs.org/docs/api/ipc-renderer#ipcrendereronchannel-listener
  * @see https://vueuse.org/useIpcRendererOn
  */
-export declare function useIpcRendererOn(channel: string, listener: IpcRendererListener): IpcRenderer
+export declare function useIpcRendererOn(
+  channel: string,
+  listener: IpcRendererListener,
+): IpcRenderer
 ```

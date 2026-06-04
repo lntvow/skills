@@ -25,8 +25,19 @@ onElementRemoval(btnRef, () => ++removedCount.value)
 </script>
 
 <template>
-  <button v-if="btnState" @click="btnOnClick">recreate me</button>
-  <button v-else ref="btnRef" @click="btnOnClick">remove me</button>
+  <button
+    v-if="btnState"
+    @click="btnOnClick"
+  >
+    recreate me
+  </button>
+  <button
+    v-else
+    ref="btnRef"
+    @click="btnOnClick"
+  >
+    remove me
+  </button>
   <b>removed times: {{ removedCount }}</b>
 </template>
 ```
@@ -38,7 +49,7 @@ The callback receives an array of `MutationRecord` objects that triggered the re
 ```ts
 import { onElementRemoval } from '@vueuse/core'
 
-onElementRemoval(targetRef, mutationRecords => {
+onElementRemoval(targetRef, (mutationRecords) => {
   console.log('Element removed', mutationRecords)
 })
 ```
@@ -58,7 +69,10 @@ stop()
 
 ```ts
 export interface OnElementRemovalOptions
-  extends ConfigurableWindow, ConfigurableDocumentOrShadowRoot, WatchOptionsBase {}
+  extends
+    ConfigurableWindow,
+    ConfigurableDocumentOrShadowRoot,
+    WatchOptionsBase {}
 /**
  * Fires when the element or any element containing it is removed.
  *
@@ -69,6 +83,6 @@ export interface OnElementRemovalOptions
 export declare function onElementRemoval(
   target: MaybeElementRef,
   callback: (mutationRecords: MutationRecord[]) => void,
-  options?: OnElementRemovalOptions
+  options?: OnElementRemovalOptions,
 ): Fn
 ```

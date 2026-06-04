@@ -16,10 +16,10 @@ Hooks provide a way to inject custom logic at specific stages of the build lifec
 export default defineConfig({
   entry: ['src/index.ts'],
   hooks: {
-    'build:prepare': async context => {
+    'build:prepare': async (context) => {
       console.log('Build starting...')
     },
-    'build:done': async context => {
+    'build:done': async (context) => {
       console.log('Build complete!')
     },
   },
@@ -36,7 +36,7 @@ export default defineConfig({
       console.log('Preparing build...')
     })
 
-    hooks.hook('build:before', context => {
+    hooks.hook('build:before', (context) => {
       console.log(`Building format: ${context.format}`)
     })
   },
@@ -52,7 +52,6 @@ Called before the build process starts.
 **When:** Once per build session
 
 **Context:**
-
 ```ts
 {
   options: ResolvedConfig,
@@ -61,13 +60,11 @@ Called before the build process starts.
 ```
 
 **Use cases:**
-
 - Setup tasks
 - Validation
 - Environment preparation
 
 **Example:**
-
 ```ts
 hooks: {
   'build:prepare': async (context) => {
@@ -84,7 +81,6 @@ Called before each Rolldown build.
 **When:** Once per format (ESM, CJS, etc.)
 
 **Context:**
-
 ```ts
 {
   options: ResolvedConfig,
@@ -94,13 +90,11 @@ Called before each Rolldown build.
 ```
 
 **Use cases:**
-
 - Modify build options per format
 - Inject plugins dynamically
 - Format-specific setup
 
 **Example:**
-
 ```ts
 hooks: {
   'build:before': async (context) => {
@@ -121,7 +115,6 @@ Called after the build completes.
 **When:** Once per build session
 
 **Context:**
-
 ```ts
 {
   options: ResolvedConfig,
@@ -131,14 +124,12 @@ Called after the build completes.
 ```
 
 **Use cases:**
-
 - Post-processing
 - Asset copying
 - Notifications
 - Deployment
 
 **Example:**
-
 ```ts
 hooks: {
   'build:done': async (context) => {
@@ -163,7 +154,7 @@ export default defineConfig({
     'build:prepare': () => {
       console.log('🚀 Starting build...')
     },
-    'build:done': context => {
+    'build:done': (context) => {
       const size = context.chunks.reduce((sum, c) => sum + c.code.length, 0)
       console.log(`✅ Build complete! Total size: ${size} bytes`)
     },
@@ -176,7 +167,7 @@ export default defineConfig({
 ```ts
 export default defineConfig({
   hooks(hooks) {
-    hooks.hook('build:before', context => {
+    hooks.hook('build:before', (context) => {
       // Add minification only for production
       if (process.env.NODE_ENV === 'production') {
         context.buildOptions.plugins.push(minifyPlugin())
@@ -193,7 +184,7 @@ import { copyFile } from 'fs/promises'
 
 export default defineConfig({
   hooks: {
-    'build:done': async context => {
+    'build:done': async (context) => {
       // Copy README to dist
       await copyFile('README.md', `${context.options.outDir}/README.md`)
     },
@@ -206,15 +197,15 @@ export default defineConfig({
 ```ts
 export default defineConfig({
   hooks: {
-    'build:prepare': context => {
+    'build:prepare': (context) => {
       context.startTime = Date.now()
     },
-    'build:done': context => {
+    'build:done': (context) => {
       const duration = Date.now() - context.startTime
       console.log(`Build took ${duration}ms`)
 
       // Log chunk sizes
-      context.chunks.forEach(chunk => {
+      context.chunks.forEach((chunk) => {
         console.log(`${chunk.fileName}: ${chunk.code.length} bytes`)
       })
     },
@@ -228,7 +219,7 @@ export default defineConfig({
 export default defineConfig({
   format: ['esm', 'cjs', 'iife'],
   hooks: {
-    'build:before': context => {
+    'build:before': (context) => {
       const format = context.buildOptions.format
 
       if (format === 'iife') {
@@ -248,7 +239,7 @@ export default defineConfig({
 ```ts
 export default defineConfig({
   hooks: {
-    'build:done': async context => {
+    'build:done': async (context) => {
       if (process.env.DEPLOY === 'true') {
         console.log('Deploying to CDN...')
         await deployToCDN(context.options.outDir)
@@ -283,11 +274,11 @@ export default defineConfig({
 ```ts
 export default defineConfig({
   hooks: {
-    'build:prepare': async context => {
+    'build:prepare': async (context) => {
       await fetchRemoteConfig()
       await initializeDatabase()
     },
-    'build:done': async context => {
+    'build:done': async (context) => {
       await uploadToS3(context.chunks)
       await invalidateCDN()
     },
@@ -300,7 +291,7 @@ export default defineConfig({
 ```ts
 export default defineConfig({
   hooks: {
-    'build:done': async context => {
+    'build:done': async (context) => {
       try {
         await riskyOperation()
       } catch (error) {

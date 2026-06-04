@@ -15,7 +15,7 @@ import { until, useAsyncState } from '@vueuse/core'
 
 const { state, isReady } = useAsyncState(
   fetch('https://jsonplaceholder.typicode.com/todos/1').then(t => t.json()),
-  {}
+  {},
 )
 
 ;(async () => {
@@ -53,7 +53,8 @@ await until(ref).toBe(true, { timeout: 1000 })
 try {
   await until(ref).toBe(true, { timeout: 1000, throwOnTimeout: true })
   // ref.value === true
-} catch (e) {
+}
+catch (e) {
   // timeout
 }
 ```
@@ -76,7 +77,7 @@ await until(ref).not.toBeTruthy()
 
 ## Type Declarations
 
-````ts
+```ts
 export interface UntilToMatchOptions extends ConfigurableFlushSync {
   /**
    * Milliseconds timeout for promise to resolve/reject if the when condition does not meet.
@@ -96,31 +97,47 @@ export interface UntilToMatchOptions extends ConfigurableFlushSync {
    *
    * @default 'false'
    */
-  deep?: WatchOptions['deep']
+  deep?: WatchOptions["deep"]
 }
 export interface UntilBaseInstance<T, Not extends boolean = false> {
   toMatch: (<U extends T = T>(
     condition: (v: T) => v is U,
-    options?: UntilToMatchOptions
+    options?: UntilToMatchOptions,
   ) => Not extends true ? Promise<Exclude<T, U>> : Promise<U>) &
-    ((condition: (v: T) => boolean, options?: UntilToMatchOptions) => Promise<T>)
+    ((
+      condition: (v: T) => boolean,
+      options?: UntilToMatchOptions,
+    ) => Promise<T>)
   changed: (options?: UntilToMatchOptions) => Promise<T>
   changedTimes: (n?: number, options?: UntilToMatchOptions) => Promise<T>
 }
-type Falsy = false | void | null | undefined | 0 | 0n | ''
-export interface UntilValueInstance<T, Not extends boolean = false> extends UntilBaseInstance<T, Not> {
+type Falsy = false | void | null | undefined | 0 | 0n | ""
+export interface UntilValueInstance<
+  T,
+  Not extends boolean = false,
+> extends UntilBaseInstance<T, Not> {
   readonly not: UntilValueInstance<T, Not extends true ? false : true>
-  toBe: <P = T>(value: MaybeRefOrGetter<P>, options?: UntilToMatchOptions) => Not extends true ? Promise<T> : Promise<P>
-  toBeTruthy: (options?: UntilToMatchOptions) => Not extends true ? Promise<T & Falsy> : Promise<Exclude<T, Falsy>>
-  toBeNull: (options?: UntilToMatchOptions) => Not extends true ? Promise<Exclude<T, null>> : Promise<null>
+  toBe: <P = T>(
+    value: MaybeRefOrGetter<P>,
+    options?: UntilToMatchOptions,
+  ) => Not extends true ? Promise<T> : Promise<P>
+  toBeTruthy: (
+    options?: UntilToMatchOptions,
+  ) => Not extends true ? Promise<T & Falsy> : Promise<Exclude<T, Falsy>>
+  toBeNull: (
+    options?: UntilToMatchOptions,
+  ) => Not extends true ? Promise<Exclude<T, null>> : Promise<null>
   toBeUndefined: (
-    options?: UntilToMatchOptions
+    options?: UntilToMatchOptions,
   ) => Not extends true ? Promise<Exclude<T, undefined>> : Promise<undefined>
   toBeNaN: (options?: UntilToMatchOptions) => Promise<T>
 }
 export interface UntilArrayInstance<T> extends UntilBaseInstance<T> {
   readonly not: UntilArrayInstance<T>
-  toContains: (value: MaybeRefOrGetter<ElementOf<ShallowUnwrapRef<T>>>, options?: UntilToMatchOptions) => Promise<T>
+  toContains: (
+    value: MaybeRefOrGetter<ElementOf<ShallowUnwrapRef<T>>>,
+    options?: UntilToMatchOptions,
+  ) => Promise<T>
 }
 /**
  * Promised one-time watch for changes
@@ -135,6 +152,10 @@ export interface UntilArrayInstance<T> extends UntilBaseInstance<T> {
  * alert('Counter is now larger than 7!')
  * ```
  */
-export declare function until<T extends unknown[]>(r: WatchSource<T> | MaybeRefOrGetter<T>): UntilArrayInstance<T>
-export declare function until<T>(r: WatchSource<T> | MaybeRefOrGetter<T>): UntilValueInstance<T>
-````
+export declare function until<T extends unknown[]>(
+  r: WatchSource<T> | MaybeRefOrGetter<T>,
+): UntilArrayInstance<T>
+export declare function until<T>(
+  r: WatchSource<T> | MaybeRefOrGetter<T>,
+): UntilValueInstance<T>
+```

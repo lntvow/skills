@@ -28,13 +28,9 @@ import { useDebounceFn, useEventListener } from '@vueuse/core'
 
 // If no invokation after 5000ms due to repeated input,
 // the function will be called anyway.
-const debouncedFn = useDebounceFn(
-  () => {
-    // do something
-  },
-  1000,
-  { maxWait: 5000 }
-)
+const debouncedFn = useDebounceFn(() => {
+  // do something
+}, 1000, { maxWait: 5000 })
 
 useEventListener(window, 'resize', debouncedFn)
 ```
@@ -46,7 +42,7 @@ import { useDebounceFn } from '@vueuse/core'
 
 const debouncedFn = useDebounceFn(() => 'response', 1000)
 
-debouncedFn().then(value => {
+debouncedFn().then((value) => {
   console.log(value) // 'response'
 })
 
@@ -65,7 +61,7 @@ import { useDebounceFn } from '@vueuse/core'
 const debouncedFn = useDebounceFn(() => 'response', 1000, { rejectOnCancel: true })
 
 debouncedFn()
-  .then(value => {
+  .then((value) => {
     // do something
   })
   .catch(() => {
@@ -141,7 +137,8 @@ This is useful when you need to ensure the debounced function runs right away, f
 ## Type Declarations
 
 ```ts
-export type UseDebounceFnReturn<T extends FunctionArgs> = CancelablePromisifyFn<T>
+export type UseDebounceFnReturn<T extends FunctionArgs> =
+  CancelablePromisifyFn<T>
 /**
  * Debounce execution of a function.
  *
@@ -155,6 +152,6 @@ export type UseDebounceFnReturn<T extends FunctionArgs> = CancelablePromisifyFn<
 export declare function useDebounceFn<T extends FunctionArgs>(
   fn: T,
   ms?: MaybeRefOrGetter<number>,
-  options?: DebounceFilterOptions
+  options?: DebounceFilterOptions,
 ): UseDebounceFnReturn<T>
 ```

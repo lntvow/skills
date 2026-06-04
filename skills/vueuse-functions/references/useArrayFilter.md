@@ -54,10 +54,10 @@ export type UseArrayFilterReturn<T = any> = ComputedRef<T[]>
  */
 export declare function useArrayFilter<T, S extends T>(
   list: MaybeRefOrGetter<MaybeRefOrGetter<T>[]>,
-  fn: (element: T, index: number, array: T[]) => element is S
+  fn: (element: T, index: number, array: T[]) => element is S,
 ): UseArrayFilterReturn<S>
 export declare function useArrayFilter<T>(
   list: MaybeRefOrGetter<MaybeRefOrGetter<T>[]>,
-  fn: (element: T, index: number, array: T[]) => unknown
+  fn: (element: T, index: number, array: T[]) => unknown,
 ): UseArrayFilterReturn<T>
 ```

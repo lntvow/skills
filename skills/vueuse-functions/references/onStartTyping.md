@@ -16,12 +16,13 @@ import { useTemplateRef } from 'vue'
 const input = useTemplateRef('input')
 
 onStartTyping(() => {
-  if (!input.value.active) input.value.focus()
+  if (!input.value.active)
+    input.value.focus()
 })
 </script>
 
 <template>
-  <input ref="input" type="text" placeholder="Start typing to focus" />
+  <input ref="input" type="text" placeholder="Start typing to focus">
 </template>
 ```
 
@@ -32,7 +33,7 @@ import { onStartTyping } from '@vueuse/core'
 
 onStartTyping(handleKey, {
   // only allow numbers
-  isTypedCharValid: e => /^\d$/.test(e.key),
+  isTypedCharValid: e => /^\d$/.test(e.key)
 })
 ```
 
@@ -46,10 +47,11 @@ onStartTyping(handleKey, {
     const { activeElement } = document
 
     // Exclude elements with id 'targetInput'
-    if (activeElement?.id === 'targetInput') return true
+    if (activeElement?.id === 'targetInput')
+      return true
 
     return defaultEditable()
-  },
+  }
 })
 ```
 
@@ -69,7 +71,12 @@ Both `isFocusedElementEditable` and `isTypedCharValid` are also exported as util
 
 ```ts
 export declare function isFocusedElementEditable(): boolean
-export declare function isTypedCharValid({ keyCode, metaKey, ctrlKey, altKey }: KeyboardEvent): boolean
+export declare function isTypedCharValid({
+  keyCode,
+  metaKey,
+  ctrlKey,
+  altKey,
+}: KeyboardEvent): boolean
 export interface OnStartTypingOptions extends ConfigurableDocument {
   isTypedCharValid?: (event: KeyboardEvent) => boolean
   isFocusedElementEditable?: () => boolean
@@ -81,5 +88,8 @@ export interface OnStartTypingOptions extends ConfigurableDocument {
  * @param callback
  * @param options
  */
-export declare function onStartTyping(callback: (event: KeyboardEvent) => void, options?: OnStartTypingOptions): void
+export declare function onStartTyping(
+  callback: (event: KeyboardEvent) => void,
+  options?: OnStartTypingOptions,
+): void
 ```

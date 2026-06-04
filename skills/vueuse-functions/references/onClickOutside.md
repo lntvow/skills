@@ -19,7 +19,9 @@ onClickOutside(target, event => console.log(event))
 </script>
 
 <template>
-  <div ref="target">Hello world</div>
+  <div ref="target">
+    Hello world
+  </div>
   <div>Outside element</div>
 </template>
 ```
@@ -42,10 +44,10 @@ If you need more control over triggering the handler, you can use the `controls`
 ```ts
 const { stop, cancel, trigger } = onClickOutside(
   modalRef,
-  event => {
+  (event) => {
     modal.value = false
   },
-  { controls: true }
+  { controls: true },
 )
 
 // cancel prevents the next click from triggering the handler
@@ -65,7 +67,11 @@ Use the `ignore` option to prevent certain elements from triggering the handler.
 ```ts
 const ignoreElRef = useTemplateRef('ignoreEl')
 
-onClickOutside(target, event => console.log(event), { ignore: [ignoreElRef, '.ignore-class', '#ignore-id'] })
+onClickOutside(
+  target,
+  event => console.log(event),
+  { ignore: [ignoreElRef, '.ignore-class', '#ignore-id'] },
+)
 ```
 
 ### Capture Phase
@@ -88,15 +94,10 @@ onClickOutside(target, handler, { detectIframe: true })
 
 ```vue
 <template>
-  <OnClickOutside
-    :options="{
-      ignore: [
-        /* ... */
-      ],
-    }"
-    @trigger="count++"
-  >
-    <div>Click Outside of Me</div>
+  <OnClickOutside :options="{ ignore: [/* ... */] }" @trigger="count++">
+    <div>
+      Click Outside of Me
+    </div>
   </OnClickOutside>
 </template>
 ```
@@ -115,8 +116,12 @@ function closeModal() {
 </script>
 
 <template>
-  <button @click="modal = true">Open Modal</button>
-  <div v-if="modal" v-on-click-outside="closeModal">Hello World</div>
+  <button @click="modal = true">
+    Open Modal
+  </button>
+  <div v-if="modal" v-on-click-outside="closeModal">
+    Hello World
+  </div>
 </template>
 ```
 
@@ -132,7 +137,7 @@ const modal = shallowRef(false)
 const ignoreElRef = useTemplateRef('ignoreEl')
 
 const onClickOutsideHandler = [
-  ev => {
+  (ev) => {
     console.log(ev)
     modal.value = false
   },
@@ -141,18 +146,26 @@ const onClickOutsideHandler = [
 </script>
 
 <template>
-  <button @click="modal = true">Open Modal</button>
+  <button @click="modal = true">
+    Open Modal
+  </button>
 
-  <div ref="ignoreElRef">click outside ignore element</div>
+  <div ref="ignoreElRef">
+    click outside ignore element
+  </div>
 
-  <div v-if="modal" v-on-click-outside="onClickOutsideHandler">Hello World</div>
+  <div v-if="modal" v-on-click-outside="onClickOutsideHandler">
+    Hello World
+  </div>
 </template>
 ```
 
 ## Type Declarations
 
 ```ts
-export interface OnClickOutsideOptions<Controls extends boolean = false> extends ConfigurableWindow {
+export interface OnClickOutsideOptions<
+  Controls extends boolean = false,
+> extends ConfigurableWindow {
   /**
    * List of elements that should not trigger the event,
    * provided as Refs or CSS Selectors.
@@ -174,19 +187,22 @@ export interface OnClickOutsideOptions<Controls extends boolean = false> extends
    */
   controls?: Controls
 }
-export type OnClickOutsideHandler<T extends OnClickOutsideOptions<boolean> = OnClickOutsideOptions> = (
+export type OnClickOutsideHandler<
+  T extends OnClickOutsideOptions<boolean> = OnClickOutsideOptions,
+> = (
   event:
-    | (T['detectIframe'] extends true ? FocusEvent : never)
-    | (T['controls'] extends true ? Event : never)
-    | PointerEvent
+    | (T["detectIframe"] extends true ? FocusEvent : never)
+    | (T["controls"] extends true ? Event : never)
+    | PointerEvent,
 ) => void
-export type OnClickOutsideReturn<Controls extends boolean = false> = Controls extends false
-  ? Fn
-  : {
-      stop: Fn
-      cancel: Fn
-      trigger: (event: Event) => void
-    }
+export type OnClickOutsideReturn<Controls extends boolean = false> =
+  Controls extends false
+    ? Fn
+    : {
+        stop: Fn
+        cancel: Fn
+        trigger: (event: Event) => void
+      }
 /**
  * Listen for clicks outside of an element.
  *
@@ -198,12 +214,12 @@ export type OnClickOutsideReturn<Controls extends boolean = false> = Controls ex
 export declare function onClickOutside<T extends OnClickOutsideOptions>(
   target: MaybeComputedElementRef,
   handler: OnClickOutsideHandler<T>,
-  options?: T
+  options?: T,
 ): Fn
 export declare function onClickOutside<T extends OnClickOutsideOptions<true>>(
   target: MaybeComputedElementRef,
   handler: OnClickOutsideHandler<T>,
-  options: T
+  options: T,
 ): {
   stop: Fn
   cancel: Fn

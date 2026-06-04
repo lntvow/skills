@@ -11,7 +11,7 @@ Use EventListener with ease. Register using [addEventListener](https://developer
 ```ts
 import { useEventListener } from '@vueuse/core'
 
-useEventListener(document, 'visibilitychange', evt => {
+useEventListener(document, 'visibilitychange', (evt) => {
   console.log(evt)
 })
 ```
@@ -24,7 +24,7 @@ When the target is omitted, it defaults to `window`:
 import { useEventListener } from '@vueuse/core'
 
 // Listens on window
-useEventListener('resize', evt => {
+useEventListener('resize', (evt) => {
   console.log(evt)
 })
 ```
@@ -39,14 +39,18 @@ import { useEventListener } from '@vueuse/core'
 import { useTemplateRef } from 'vue'
 
 const element = useTemplateRef('element')
-useEventListener(element, 'keydown', e => {
+useEventListener(element, 'keydown', (e) => {
   console.log(e.key)
 })
 </script>
 
 <template>
-  <div v-if="cond" ref="element">Div1</div>
-  <div v-else ref="element">Div2</div>
+  <div v-if="cond" ref="element">
+    Div1
+  </div>
+  <div v-else ref="element">
+    Div2
+  </div>
 </template>
 ```
 
@@ -57,7 +61,7 @@ You can pass an array of events to listen to multiple events at once:
 ```ts
 import { useEventListener } from '@vueuse/core'
 
-useEventListener(document, ['mouseenter', 'mouseleave'], evt => {
+useEventListener(document, ['mouseenter', 'mouseleave'], (evt) => {
   console.log(evt.type)
 })
 ```
@@ -70,7 +74,7 @@ You can also pass an array of targets:
 import { useEventListener } from '@vueuse/core'
 
 const buttons = document.querySelectorAll('button')
-useEventListener(buttons, 'click', evt => {
+useEventListener(buttons, 'click', (evt) => {
   console.log('Button clicked')
 })
 ```
@@ -82,7 +86,7 @@ Returns a cleanup function to manually unregister the listener:
 ```ts
 import { useEventListener } from '@vueuse/core'
 
-const cleanup = useEventListener(document, 'keydown', e => {
+const cleanup = useEventListener(document, 'keydown', (e) => {
   console.log(e.key)
 })
 
@@ -97,7 +101,7 @@ import { useEventListener } from '@vueuse/core'
 // onMounted will only be called in the client side
 // so it guarantees the DOM APIs are available.
 onMounted(() => {
-  useEventListener(document, 'keydown', e => {
+  useEventListener(document, 'keydown', (e) => {
     console.log(e.key)
   })
 })
@@ -126,7 +130,7 @@ export interface GeneralEventListener<E = Event> {
 export declare function useEventListener<E extends keyof WindowEventMap>(
   event: MaybeRefOrGetter<Arrayable<E>>,
   listener: MaybeRef<Arrayable<(this: Window, ev: WindowEventMap[E]) => any>>,
-  options?: MaybeRefOrGetter<boolean | AddEventListenerOptions>
+  options?: MaybeRefOrGetter<boolean | AddEventListenerOptions>,
 ): Fn
 /**
  * Register using addEventListener on mounted, and removeEventListener automatically on unmounted.
@@ -143,7 +147,7 @@ export declare function useEventListener<E extends keyof WindowEventMap>(
   target: Window,
   event: MaybeRefOrGetter<Arrayable<E>>,
   listener: MaybeRef<Arrayable<(this: Window, ev: WindowEventMap[E]) => any>>,
-  options?: MaybeRefOrGetter<boolean | AddEventListenerOptions>
+  options?: MaybeRefOrGetter<boolean | AddEventListenerOptions>,
 ): Fn
 /**
  * Register using addEventListener on mounted, and removeEventListener automatically on unmounted.
@@ -155,8 +159,10 @@ export declare function useEventListener<E extends keyof WindowEventMap>(
 export declare function useEventListener<E extends keyof DocumentEventMap>(
   target: Document,
   event: MaybeRefOrGetter<Arrayable<E>>,
-  listener: MaybeRef<Arrayable<(this: Document, ev: DocumentEventMap[E]) => any>>,
-  options?: MaybeRefOrGetter<boolean | AddEventListenerOptions>
+  listener: MaybeRef<
+    Arrayable<(this: Document, ev: DocumentEventMap[E]) => any>
+  >,
+  options?: MaybeRefOrGetter<boolean | AddEventListenerOptions>,
 ): Fn
 /**
  * Register using addEventListener on mounted, and removeEventListener automatically on unmounted.
@@ -168,8 +174,10 @@ export declare function useEventListener<E extends keyof DocumentEventMap>(
 export declare function useEventListener<E extends keyof ShadowRootEventMap>(
   target: MaybeRefOrGetter<Arrayable<ShadowRoot> | null | undefined>,
   event: MaybeRefOrGetter<Arrayable<E>>,
-  listener: MaybeRef<Arrayable<(this: ShadowRoot, ev: ShadowRootEventMap[E]) => any>>,
-  options?: MaybeRefOrGetter<boolean | AddEventListenerOptions>
+  listener: MaybeRef<
+    Arrayable<(this: ShadowRoot, ev: ShadowRootEventMap[E]) => any>
+  >,
+  options?: MaybeRefOrGetter<boolean | AddEventListenerOptions>,
 ): Fn
 /**
  * Register using addEventListener on mounted, and removeEventListener automatically on unmounted.
@@ -182,7 +190,7 @@ export declare function useEventListener<E extends keyof HTMLElementEventMap>(
   target: MaybeRefOrGetter<Arrayable<HTMLElement> | null | undefined>,
   event: MaybeRefOrGetter<Arrayable<E>>,
   listener: MaybeRef<(this: HTMLElement, ev: HTMLElementEventMap[E]) => any>,
-  options?: MaybeRefOrGetter<boolean | AddEventListenerOptions>
+  options?: MaybeRefOrGetter<boolean | AddEventListenerOptions>,
 ): Fn
 /**
  * Register using addEventListener on mounted, and removeEventListener automatically on unmounted.
@@ -191,11 +199,16 @@ export declare function useEventListener<E extends keyof HTMLElementEventMap>(
  *
  * @see https://vueuse.org/useEventListener
  */
-export declare function useEventListener<Names extends string, EventType = Event>(
-  target: MaybeRefOrGetter<Arrayable<InferEventTarget<Names>> | null | undefined>,
+export declare function useEventListener<
+  Names extends string,
+  EventType = Event,
+>(
+  target: MaybeRefOrGetter<
+    Arrayable<InferEventTarget<Names>> | null | undefined
+  >,
   event: MaybeRefOrGetter<Arrayable<Names>>,
   listener: MaybeRef<Arrayable<GeneralEventListener<EventType>>>,
-  options?: MaybeRefOrGetter<boolean | AddEventListenerOptions>
+  options?: MaybeRefOrGetter<boolean | AddEventListenerOptions>,
 ): Fn
 /**
  * Register using addEventListener on mounted, and removeEventListener automatically on unmounted.
@@ -208,6 +221,6 @@ export declare function useEventListener<EventType = Event>(
   target: MaybeRefOrGetter<Arrayable<EventTarget> | null | undefined>,
   event: MaybeRefOrGetter<Arrayable<string>>,
   listener: MaybeRef<Arrayable<GeneralEventListener<EventType>>>,
-  options?: MaybeRefOrGetter<boolean | AddEventListenerOptions>
+  options?: MaybeRefOrGetter<boolean | AddEventListenerOptions>,
 ): Fn
 ```

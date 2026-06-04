@@ -9,7 +9,6 @@ tsdown searches for config files automatically in the current directory and pare
 ## Supported File Names
 
 tsdown looks for these files (in order):
-
 - `tsdown.config.ts`
 - `tsdown.config.mts`
 - `tsdown.config.cts`
@@ -101,7 +100,7 @@ Each configuration runs as a separate build.
 Use a function for conditional config:
 
 ```ts
-export default defineConfig(options => {
+export default defineConfig((options) => {
   const isDev = options.watch
 
   return {
@@ -115,7 +114,6 @@ export default defineConfig(options => {
 ```
 
 Available options:
-
 - `watch` - Whether watch mode is enabled
 - Other CLI flags passed to config
 
@@ -232,7 +230,7 @@ export default defineConfig([
 ### Development vs Production
 
 ```ts
-export default defineConfig(options => ({
+export default defineConfig((options) => ({
   entry: ['src/index.ts'],
   format: ['esm', 'cjs'],
   minify: !options.watch,

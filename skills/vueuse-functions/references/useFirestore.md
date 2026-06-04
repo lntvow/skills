@@ -52,7 +52,7 @@ The document `id` is automatically added as a read-only property to each returne
 
 ```ts
 const todos = useFirestore(collection(db, 'todos'), [], {
-  errorHandler: err => {
+  errorHandler: (err) => {
     console.error('Firestore error:', err)
     // Handle error (e.g., show notification)
   },
@@ -81,7 +81,9 @@ or use `createGlobalState` from the core package
 import { createGlobalState } from '@vueuse/core'
 import { useFirestore } from '@vueuse/firebase/useFirestore'
 
-export const useTodos = createGlobalState(() => useFirestore(collection(db, 'todos')))
+export const useTodos = createGlobalState(
+  () => useFirestore(collection(db, 'todos')),
+)
 ```
 
 ```vue
@@ -103,25 +105,25 @@ export interface UseFirestoreOptions {
   autoDispose?: boolean | number
 }
 export type FirebaseDocRef<T> = Query<T> | DocumentReference<T>
-type Falsy = false | 0 | '' | null | undefined
+type Falsy = false | 0 | "" | null | undefined
 export declare function useFirestore<T extends DocumentData>(
   maybeDocRef: MaybeRef<DocumentReference<T> | Falsy>,
   initialValue: T,
-  options?: UseFirestoreOptions
+  options?: UseFirestoreOptions,
 ): Ref<T | null>
 export declare function useFirestore<T extends DocumentData>(
   maybeDocRef: MaybeRef<Query<T> | Falsy>,
   initialValue: T[],
-  options?: UseFirestoreOptions
+  options?: UseFirestoreOptions,
 ): Ref<T[]>
 export declare function useFirestore<T extends DocumentData>(
   maybeDocRef: MaybeRef<DocumentReference<T> | Falsy>,
   initialValue?: T | undefined | null,
-  options?: UseFirestoreOptions
+  options?: UseFirestoreOptions,
 ): Ref<T | undefined | null>
 export declare function useFirestore<T extends DocumentData>(
   maybeDocRef: MaybeRef<Query<T> | Falsy>,
   initialValue?: T[],
-  options?: UseFirestoreOptions
+  options?: UseFirestoreOptions,
 ): Ref<T[] | undefined>
 ```

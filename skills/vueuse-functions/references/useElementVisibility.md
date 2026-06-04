@@ -58,7 +58,9 @@ const targetIsVisible = useElementVisibility(target, {
 
 ```vue
 <template>
-  <UseElementVisibility v-slot="{ isVisible }">Is Visible: {{ isVisible }}</UseElementVisibility>
+  <UseElementVisibility v-slot="{ isVisible }">
+    Is Visible: {{ isVisible }}
+  </UseElementVisibility>
 </template>
 ```
 
@@ -112,7 +114,9 @@ function onElementVisibilityWithControls(state) {
 
 ```ts
 export interface UseElementVisibilityOptions<Controls extends boolean = false>
-  extends ConfigurableWindow, Pick<UseIntersectionObserverOptions, 'rootMargin' | 'threshold'> {
+  extends
+    ConfigurableWindow,
+    Pick<UseIntersectionObserverOptions, "rootMargin" | "threshold"> {
   /**
    * Initial value.
    *
@@ -122,7 +126,7 @@ export interface UseElementVisibilityOptions<Controls extends boolean = false>
   /**
    * The element that is used as the viewport for checking visibility of the target.
    */
-  scrollTarget?: UseIntersectionObserverOptions['root']
+  scrollTarget?: UseIntersectionObserverOptions["root"]
   /**
    * Stop tracking when element visibility changes for the first time
    *
@@ -136,9 +140,10 @@ export interface UseElementVisibilityOptions<Controls extends boolean = false>
    */
   controls?: Controls
 }
-export type UseElementVisibilityReturn<Controls extends boolean = false> = Controls extends true
-  ? UseElementVisibilityReturnWithControls
-  : ShallowRef<boolean>
+export type UseElementVisibilityReturn<Controls extends boolean = false> =
+  Controls extends true
+    ? UseElementVisibilityReturnWithControls
+    : ShallowRef<boolean>
 export interface UseElementVisibilityReturnWithControls extends UseIntersectionObserverReturn {
   isVisible: ShallowRef<boolean>
 }
@@ -149,10 +154,10 @@ export interface UseElementVisibilityReturnWithControls extends UseIntersectionO
  */
 export declare function useElementVisibility(
   element: MaybeComputedElementRef,
-  options?: UseElementVisibilityOptions<false>
+  options?: UseElementVisibilityOptions<false>,
 ): UseElementVisibilityReturn<false>
 export declare function useElementVisibility(
   element: MaybeComputedElementRef,
-  options?: UseElementVisibilityOptions<true>
+  options?: UseElementVisibilityOptions<true>,
 ): UseElementVisibilityReturn<true>
 ```

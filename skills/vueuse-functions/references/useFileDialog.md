@@ -17,7 +17,7 @@ const { files, open, reset, onCancel, onChange } = useFileDialog({
   directory: true, // Select directories instead of files if set true
 })
 
-onChange(files => {
+onChange((files) => {
   /** do something with files */
 })
 
@@ -27,7 +27,9 @@ onCancel(() => {
 </script>
 
 <template>
-  <button type="button" @click="open">Choose file</button>
+  <button type="button" @click="open">
+    Choose file
+  </button>
 </template>
 ```
 
@@ -83,5 +85,7 @@ export interface UseFileDialogReturn {
  * @see https://vueuse.org/useFileDialog
  * @param options
  */
-export declare function useFileDialog(options?: UseFileDialogOptions): UseFileDialogReturn
+export declare function useFileDialog(
+  options?: UseFileDialogOptions,
+): UseFileDialogReturn
 ```

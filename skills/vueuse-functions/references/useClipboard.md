@@ -25,12 +25,11 @@ const { text, copy, copied, isSupported } = useClipboard({ source })
       <span v-if="!copied">Copy</span>
       <span v-else>Copied!</span>
     </button>
-    <p>
-      Current copied:
-      <code>{{ text || 'none' }}</code>
-    </p>
+    <p>Current copied: <code>{{ text || 'none' }}</code></p>
   </div>
-  <p v-else>Your browser does not support Clipboard API</p>
+  <p v-else>
+    Your browser does not support Clipboard API
+  </p>
 </template>
 ```
 
@@ -104,7 +103,9 @@ export interface UseClipboardReturn<Optional> extends Supportable {
   text: Readonly<ShallowRef<string>>
   copied: Readonly<ShallowRef<boolean>>
   copyPending: Readonly<ShallowRef<boolean>>
-  copy: Optional extends true ? (text?: ClipboardValue) => Promise<void> : (text: ClipboardValue) => Promise<void>
+  copy: Optional extends true
+    ? (text?: ClipboardValue) => Promise<void>
+    : (text: ClipboardValue) => Promise<void>
 }
 /**
  * Reactive Clipboard API.
@@ -114,6 +115,10 @@ export interface UseClipboardReturn<Optional> extends Supportable {
  *
  * @__NO_SIDE_EFFECTS__
  */
-export declare function useClipboard(options?: UseClipboardOptions<undefined>): UseClipboardReturn<false>
-export declare function useClipboard(options: UseClipboardOptions<MaybeRefOrGetter<string>>): UseClipboardReturn<true>
+export declare function useClipboard(
+  options?: UseClipboardOptions<undefined>,
+): UseClipboardReturn<false>
+export declare function useClipboard(
+  options: UseClipboardOptions<MaybeRefOrGetter<string>>,
+): UseClipboardReturn<true>
 ```

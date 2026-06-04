@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    // Build and Output
+    "incremental": true,
+    "tsBuildInfoFile": "tsconfig.tsbuildinfo",
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    // Type Checking
+    "strict": true,
+    "skipLibCheck": true,
+    "verbatimModuleSyntax": true,
+
+    // Customization
+    "types": ["node"]
+  },
+  "include": ["src/**/*", "scripts/**/*", "meta.ts"]
+}

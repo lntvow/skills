@@ -1,0 +1,53 @@
+{
+  "name": "skills",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A curated collection of Agent Skills",
+  "keywords": [
+    "skills"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lntvow/skills.git"
+  },
+  "license": "MIT",
+  "author": "lntvow",
+  "type": "module",
+  "scripts": {
+    "prepare": "cli hooks",
+    "clean": "cli clean ./node_modules/",
+    "upgrade": "cli upgrade -u -x \"@types/node\" && pnpm install",
+    "tidy": "cli tidy",
+    "commit": "git add -A && cli commit",
+    "release": "pnpm lint && git add -A && cli release package.json -a",
+    "changelog": "cli changelog -p angular -i CHANGELOG.md -s",
+    "version": "pnpm changelog && git add -A",
+    "lint:eslint": "eslint --fix --cache",
+    "lint:tsc": "tsc --noEmit",
+    "lint": "cli parallel lint:eslint lint:tsc",
+    "start": "tsx scripts/cli.ts"
+  },
+  "devDependencies": {
+    "@clack/prompts": "^1.5.1",
+    "@lntvow/cli": "^0.0.12",
+    "@lntvow/eslint-config": "^10.3.1",
+    "@types/node": "^22.19.19",
+    "eslint": "^10.4.1",
+    "prettier": "^3.8.3",
+    "simple-git": "^3.36.0",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=22.12.0",
+      "onFail": "warn"
+    },
+    "packageManager": {
+      "name": "pnpm",
+      "version": ">=10.0.0",
+      "onFail": "warn"
+    }
+  }
+}

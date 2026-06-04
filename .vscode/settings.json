@@ -1,0 +1,12 @@
+{
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "package.json": "package-lock.json, jsr.json, yarn.lock, pnpm-lock.yaml, pnpm-workspace.yaml, bun.lockb, bun.lock, .gitignore, .npmrc, .npmignore, LICENSE, eslint.config.*, .eslintcache, .czrc, .editorconfig, .prettierrc, .prettierrc.*, prettier.config.*, .prettierignore, simple-git-hooks.*, .simple-git-hooks.*, .lintstagedrc, .lintstagedrc.*, lint-staged.config.*, .commitlintrc, .commitlintrc.*, commitlint.config.*, tsconfig.tsbuildinfo",
+    "README": "README.md,README.*.md",
+    ".env.development": ".env.*"
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.formatOnSave": true
+}

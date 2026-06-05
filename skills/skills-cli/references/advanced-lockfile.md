@@ -27,6 +27,14 @@ If an older lock file version is read, it's wiped. Users must reinstall to popul
 5. Compares latest folder tree SHA with lock file `skillFolderHash`
 6. Mismatch → update available; `skills update` reinstalls via `skills add <source-tree-url> -g -y`
 
+## GitHub Rate Limits
+
+Unauthenticated GitHub API requests are limited to 60/hour (shared per IP). `skills update` and `skills check` need authentication to avoid `Failed to fetch tree` errors (5,000/hour authenticated).
+
+The CLI resolves tokens from: `GITHUB_TOKEN` → `GH_TOKEN` → `gh auth token`.
+
+Tokens need **no scopes** for public repos — a classic token with empty permissions is sufficient.
+
 <!--
 Source references:
 - https://github.com/vercel-labs/skills/blob/main/AGENTS.md

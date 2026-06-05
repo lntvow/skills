@@ -19,7 +19,7 @@ For OSS projects **without existing skills**. We clone the repo as a submodule a
 
 - **Projects:** Vue, Nuxt, Vite, UnoCSS
 - **Workflow:** Read docs → Understand → Generate skills
-- **Source:** `sources/{project}/docs/`
+- **Source:** `sources/{project}/docs/` — if no `docs/` directory exists, fall back to reading `sources/{project}/README.md`
 
 ### Type 2: Synced Skills (`vendor/`)
 

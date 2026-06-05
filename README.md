@@ -7,13 +7,13 @@ A curated collection of [Agent Skills](https://agentskills.io/home) focused on V
 ## Installation
 
 ```bash
-pnpx skills add lntvow/skills --skill='*'
+pnpx skills add lntvow/skills --skill '*' -a github-copilot
 ```
 
 Or to install all of them globally:
 
 ```bash
-pnpx skills add lntvow/skills --skill='*' -g
+pnpx skills add lntvow/skills --skill '*' -a github-copilot -g
 ```
 
 Learn more about CLI usage at [skills](https://github.com/vercel-labs/skills).

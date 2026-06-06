@@ -133,6 +133,14 @@ You don't need to do anything about them unless being asked.
 
 **Note:** Do NOT modify synced skills manually. Changes should be contributed upstream to the vendor project.
 
+#### ⚠️ After Any Skill Change
+
+After adding, updating, or removing skills (both Type 1 and Type 2), always check and update `README.md`:
+
+- **Added skills** → append rows to the appropriate table
+- **Removed skills** → delete rows from the table
+- **Updated skills** → review descriptions and links for accuracy
+
 ## File Formats
 
 ### `SKILL.md`

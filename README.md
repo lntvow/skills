@@ -39,14 +39,21 @@ Unopinionated but tilted toward modern stacks (TypeScript, ESM, Composition API)
 
 Synced from external repositories that maintain their own skills.
 
-| Skill                       | Description                                               | Source                                                                  |
-| --------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------- |
-| vueuse-functions (Official) | VueUse — 200+ Vue composition utilities                   | [vueuse/skills](https://github.com/vueuse/vueuse)                       |
-| tsdown (Official)           | tsdown — TypeScript library bundler powered by Rolldown   | [rolldown/tsdown](https://github.com/rolldown/tsdown)                   |
-| vue-best-practices          | Vue 3 + TypeScript best practices and patterns            | [vuejs-ai/skills](https://github.com/vuejs-ai/skills)                   |
-| vue-router-best-practices   | Vue Router best practices and navigation patterns         | [vuejs-ai/skills](https://github.com/vuejs-ai/skills)                   |
-| vue-testing-best-practices  | Vue testing best practices with Vitest and Vue Test Utils | [vuejs-ai/skills](https://github.com/vuejs-ai/skills)                   |
-| web-design-guidelines       | Web design guidelines for building beautiful interfaces   | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) |
+| Skill                         | Description                                               | Source                                                                  |
+| ----------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------- |
+| vueuse-functions (Official)   | VueUse — 200+ Vue composition utilities                   | [vueuse/skills](https://github.com/vueuse/vueuse)                       |
+| tsdown (Official)             | tsdown — TypeScript library bundler powered by Rolldown   | [rolldown/tsdown](https://github.com/rolldown/tsdown)                   |
+| vue-best-practices            | Vue 3 + TypeScript best practices and patterns            | [vuejs-ai/skills](https://github.com/vuejs-ai/skills)                   |
+| vue-router-best-practices     | Vue Router best practices and navigation patterns         | [vuejs-ai/skills](https://github.com/vuejs-ai/skills)                   |
+| vue-testing-best-practices    | Vue testing best practices with Vitest and Vue Test Utils | [vuejs-ai/skills](https://github.com/vuejs-ai/skills)                   |
+| web-design-guidelines         | Web design guidelines for building beautiful interfaces   | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) |
+| gsap-core (Official)          | GSAP core API — tweens, easing, stagger, matchMedia       | [greensock/gsap-skills](https://github.com/greensock/gsap-skills)       |
+| gsap-timeline (Official)      | GSAP timelines — sequencing, position parameter, nesting  | [greensock/gsap-skills](https://github.com/greensock/gsap-skills)       |
+| gsap-scrolltrigger (Official) | GSAP ScrollTrigger — scroll-linked animations, pinning    | [greensock/gsap-skills](https://github.com/greensock/gsap-skills)       |
+| gsap-plugins (Official)       | GSAP plugins — Flip, Draggable, SplitText, ScrollTo, etc. | [greensock/gsap-skills](https://github.com/greensock/gsap-skills)       |
+| gsap-frameworks (Official)    | GSAP with Vue, Svelte — lifecycle, cleanup, scoping       | [greensock/gsap-skills](https://github.com/greensock/gsap-skills)       |
+| gsap-performance (Official)   | GSAP performance — transforms, will-change, batching      | [greensock/gsap-skills](https://github.com/greensock/gsap-skills)       |
+| gsap-utils (Official)         | GSAP utilities — clamp, mapRange, random, snap, toArray   | [greensock/gsap-skills](https://github.com/greensock/gsap-skills)       |
 
 ## FAQ
 

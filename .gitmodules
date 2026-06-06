@@ -31,3 +31,6 @@
 [submodule "sources/skills-cli"]
 	path = sources/skills-cli
 	url = https://github.com/vercel-labs/skills
+[submodule "vendor/gsap-skills"]
+	path = vendor/gsap-skills
+	url = https://github.com/greensock/gsap-skills

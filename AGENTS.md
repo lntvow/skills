@@ -70,10 +70,10 @@ You don't need to do anything about them unless being asked.
 
 #### Adding a New Project
 
-1. **Add entry to `meta.ts`** in the `submodules` object:
+1. **Add entry to `meta.ts`** in the `sources` object:
 
    ```ts
-   export const submodules = {
+   export const sources = {
      // ... existing entries
      'new-project': 'https://github.com/org/repo',
    }

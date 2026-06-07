@@ -1,10 +1,10 @@
 import * as p from '@clack/prompts'
-import { execSync } from 'node:child_process'
+import { exec as execCb, execSync } from 'node:child_process'
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { manual, submodules, vendors } from '../meta'
+import { manual, sources, vendors } from '../meta'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = join(__dirname, '..')
@@ -21,8 +21,25 @@ function execSafe(cmd: string, cwd = root): string | null {
   }
 }
 
-function getGitSha(dir: string): string | null {
-  return execSafe('git rev-parse HEAD', dir)
+/**
+ * Async version of exec — does NOT block the event loop.
+ * Use with spinner so the animation keeps running during long operations.
+ */
+function execAsync(cmd: string, cwd = root): Promise<string> {
+  return new Promise((resolve, reject) => {
+    execCb(cmd, { cwd, encoding: 'utf-8' }, (err, stdout) => {
+      if (err) reject(err)
+      else resolve(stdout.trim())
+    })
+  })
+}
+
+async function execSafeAsync(cmd: string, cwd = root): Promise<string | null> {
+  try {
+    return await execAsync(cmd, cwd)
+  } catch {
+    return null
+  }
 }
 
 function submoduleExists(path: string): boolean {
@@ -72,7 +89,7 @@ interface VendorConfig {
 
 async function initSubmodules(skipPrompt = false) {
   const allProjects: Project[] = [
-    ...Object.entries(submodules).map(([name, url]) => ({
+    ...Object.entries(sources).map(([name, url]) => ({
       name,
       url,
       type: 'source' as const,
@@ -173,20 +190,42 @@ async function initSubmodules(skipPrompt = false) {
   }
 }
 
+/**
+ * Check which skills in a vendor have upstream changes.
+ * Returns the list of skills that have new commits touching their source dir.
+ * Does NOT log anything — caller decides how to report.
+ */
+async function getVendorSkillChanges(
+  vendorPath: string,
+  vendorSkillsPath: string,
+  skills: Record<string, string>
+): Promise<{ sourceSkillName: string; outputSkillName: string }[]> {
+  const changed: { sourceSkillName: string; outputSkillName: string }[] = []
+  for (const [sourceSkillName, outputSkillName] of Object.entries(skills)) {
+    const sourceSkillPath = join(vendorSkillsPath, sourceSkillName)
+    if (!existsSync(sourceSkillPath)) continue
+    const hasChanges = await execSafeAsync(`git log HEAD..@{u} -- skills/${sourceSkillName}`, vendorPath)
+    if (hasChanges) changed.push({ sourceSkillName, outputSkillName })
+  }
+  return changed
+}
+
 async function syncSubmodules() {
   const spinner = p.spinner()
 
-  // Update all submodules
-  spinner.start('Updating submodules...')
+  // Only fetch remote changes, don't modify working tree yet
+  spinner.start('Fetching submodule remotes...')
   try {
-    exec('git submodule update --remote --merge')
-    spinner.stop('Submodules updated')
+    await execAsync('git submodule foreach git fetch')
+    spinner.stop('Fetched remote changes')
   } catch (error) {
-    spinner.stop(`Failed to update submodules: ${error}`)
+    spinner.stop(`Failed to fetch submodules: ${error}`)
     return
   }
 
-  // Sync Type 2 skills
+  let anySynced = false
+
+  // Sync Type 2 skills — only update submodules that have skill changes upstream
   for (const [vendorName, config] of Object.entries(vendors)) {
     const vendorConfig = config as VendorConfig
     const vendorPath = join(root, 'vendor', vendorName)
@@ -202,17 +241,44 @@ async function syncSubmodules() {
       continue
     }
 
-    // Sync each specified skill
-    for (const [sourceSkillName, outputSkillName] of Object.entries(vendorConfig.skills)) {
+    // Check each skill: does upstream have new commits touching its source dir?
+    p.log.info(`Checking vendor: ${vendorName}`)
+    const pendingSkills = await getVendorSkillChanges(vendorPath, vendorSkillsPath, vendorConfig.skills)
+
+    // Log per-skill results
+    for (const [sourceSkillName] of Object.entries(vendorConfig.skills)) {
+      const changed = pendingSkills.some(s => s.sourceSkillName === sourceSkillName)
+      if (changed) {
+        p.log.message(`Upstream changes: ${vendorName}/skills/${sourceSkillName}`)
+      } else {
+        p.log.message(`Already latest: ${vendorName}/skills/${sourceSkillName}`)
+      }
+    }
+
+    if (pendingSkills.length === 0) {
+      // No skill changes upstream → working tree stays clean
+      p.log.success(`No updates: ${vendorName} skills are already latest`)
+      continue
+    }
+
+    p.log.info(`${vendorName}: ${pendingSkills.length} skill(s) have upstream changes`)
+
+    // Upstream has skill changes: update this specific submodule once
+    spinner.start(`Updating submodule: ${vendorName}`)
+    try {
+      await execAsync(`git submodule update --remote --merge ${vendorPath}`)
+      spinner.stop(`Updated submodule: ${vendorName}`)
+    } catch (error) {
+      spinner.stop(`Failed to update ${vendorName}: ${error}`)
+      continue
+    }
+
+    // Sync each skill that has upstream changes
+    for (const { sourceSkillName, outputSkillName } of pendingSkills) {
       const sourceSkillPath = join(vendorSkillsPath, sourceSkillName)
       const outputPath = join(root, 'skills', outputSkillName)
 
-      if (!existsSync(sourceSkillPath)) {
-        p.log.warn(`Skill not found: vendor/${vendorName}/skills/${sourceSkillName}`)
-        continue
-      }
-
-      spinner.start(`Syncing skill: ${sourceSkillName} → ${outputSkillName}`)
+      p.log.message(`Syncing: ${sourceSkillName} → ${outputSkillName}`)
 
       // Remove existing output directory to ensure clean sync
       if (existsSync(outputPath)) {
@@ -248,10 +314,10 @@ async function syncSubmodules() {
         }
       }
 
-      // Update SYNC.md (instead of GENERATION.md for vendored skills)
-      const sha = getGitSha(vendorPath)
-      const syncPath = join(outputPath, 'SYNC.md')
+      // Update SYNC.md
       const date = new Date().toISOString().split('T')[0]
+      const syncPath = join(outputPath, 'SYNC.md')
+      const sha = await execSafeAsync(`git log -1 --format=%H -- skills/${sourceSkillName}`, vendorPath)
 
       const syncContent = `# Sync Info
 
@@ -262,11 +328,16 @@ async function syncSubmodules() {
 
       writeFileSync(syncPath, syncContent)
 
-      spinner.stop(`Synced: ${sourceSkillName} → ${outputSkillName}`)
+      p.log.success(`Synced: ${sourceSkillName} → ${outputSkillName}`)
+      anySynced = true
     }
   }
 
-  p.log.success('All skills synced')
+  if (anySynced) {
+    p.log.success('Skills synced')
+  } else {
+    p.log.success('All skills are already latest — nothing to sync')
+  }
 }
 
 async function checkUpdates() {
@@ -274,42 +345,44 @@ async function checkUpdates() {
   spinner.start('Fetching remote changes...')
 
   try {
-    exec('git submodule foreach git fetch')
+    await execAsync('git submodule foreach git fetch')
     spinner.stop('Fetched remote changes')
   } catch (error) {
     spinner.stop(`Failed to fetch: ${error}`)
     return
   }
 
-  const updates: { name: string; type: string; behind: number }[] = []
+  const updates: { name: string; type: string; detail: string; skills?: string[] }[] = []
 
-  // Check sources
-  for (const name of Object.keys(submodules)) {
+  // Check sources — look for docs/ changes, fall back to README.md
+  for (const name of Object.keys(sources)) {
     const path = join(root, 'sources', name)
-    if (!existsSync(path)) {
-      continue
-    }
+    if (!existsSync(path)) continue
 
-    const behind = execSafe('git rev-list HEAD..@{u} --count', path)
-    const count = behind ? Number.parseInt(behind) : 0
-    if (count > 0) {
-      updates.push({ name, type: 'source', behind: count })
+    const checkPath = existsSync(join(path, 'docs')) ? 'docs' : 'README.md'
+    const hasChanges = execSafe(`git log HEAD..@{u} -- ${checkPath}`, path)
+    if (hasChanges) {
+      updates.push({ name, type: 'source', detail: `${checkPath} has upstream changes` })
     }
   }
 
   // Check vendors
   for (const [name, config] of Object.entries(vendors)) {
     const vendorConfig = config as VendorConfig
-    const path = join(root, 'vendor', name)
-    if (!existsSync(path)) {
-      continue
-    }
+    const vendorPath = join(root, 'vendor', name)
+    const vendorSkillsPath = join(vendorPath, 'skills')
 
-    const behind = execSafe('git rev-list HEAD..@{u} --count', path)
-    const count = behind ? Number.parseInt(behind) : 0
-    if (count > 0) {
-      const skillNames = Object.values(vendorConfig.skills).join(', ')
-      updates.push({ name: `${name} (${skillNames})`, type: 'vendor', behind: count })
+    if (!existsSync(vendorPath)) continue
+    if (!existsSync(vendorSkillsPath)) continue
+
+    const changed = await getVendorSkillChanges(vendorPath, vendorSkillsPath, vendorConfig.skills)
+    if (changed.length > 0) {
+      updates.push({
+        name,
+        type: 'vendor',
+        detail: `${changed.length} skill(s) have upstream changes`,
+        skills: changed.map(s => s.sourceSkillName),
+      })
     }
   }
 
@@ -318,7 +391,12 @@ async function checkUpdates() {
   } else {
     p.log.info('Updates available:')
     for (const update of updates) {
-      p.log.message(`  ${update.name} (${update.type}): ${update.behind} commits behind`)
+      p.log.message(`  ${update.name}: ${update.detail}`)
+      if (update.skills) {
+        for (const skill of update.skills) {
+          p.log.message(`    - ${skill}`)
+        }
+      }
     }
   }
 }
@@ -326,8 +404,8 @@ async function checkUpdates() {
 function getExpectedSkillNames(): Set<string> {
   const expected = new Set<string>()
 
-  // Skills from submodules (generated skills use same name as submodule key)
-  for (const name of Object.keys(submodules)) {
+  // Skills from sources (generated skills use same name as source key)
+  for (const name of Object.keys(sources)) {
     expected.add(name)
   }
 
@@ -364,7 +442,7 @@ async function cleanup(skipPrompt = false) {
 
   // 1. Find and remove extra submodules
   const allProjects: Project[] = [
-    ...Object.entries(submodules).map(([name, url]) => ({
+    ...Object.entries(sources).map(([name, url]) => ({
       name,
       url,
       type: 'source' as const,

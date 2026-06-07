@@ -7,7 +7,7 @@ export interface VendorSkillMeta {
 /**
  * Repositories to clone as submodules and generate skills from source
  */
-export const submodules: Record<string, string> = {
+export const sources: Record<string, string> = {
   'vue': 'https://github.com/vuejs/docs',
   'vite': 'https://github.com/vitejs/vite',
   'unocss': 'https://github.com/unocss/unocss',

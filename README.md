@@ -28,12 +28,12 @@ Unopinionated but tilted toward modern stacks (TypeScript, ESM, Composition API)
 | ---------- | --------------------------------------------------------------------- | ----------------------------------------------------------- |
 | skills-cli | Skills CLI — install, manage, discover, and create agent skills       | [vercel-labs/skills](https://github.com/vercel-labs/skills) |
 | vue        | Vue 3 — reactivity, SFC, components, composables, TypeScript, SSR     | [vuejs/docs](https://github.com/vuejs/docs)                 |
-| vite       | Vite — config, plugins, asset handling, env variables, build, SSR     | [vitejs/vite](https://github.com/vitejs/vite)               |
-| unocss     | UnoCSS — configuration, rules, shortcuts, presets, icons, attributify | [unocss/unocss](https://github.com/unocss/unocss)           |
-| pnpm       | pnpm — workspaces, catalogs, filtering, CLI, scripts                  | [pnpm/pnpm.io](https://github.com/pnpm/pnpm.io)             |
 | pinia      | Pinia — stores, state, getters, actions, plugins, SSR, testing        | [vuejs/pinia](https://github.com/vuejs/pinia)               |
+| vite       | Vite — config, plugins, asset handling, env variables, build, SSR     | [vitejs/vite](https://github.com/vitejs/vite)               |
 | vitest     | Vitest — test API, assertions, mocking, configuration, CLI            | [vitest-dev/vitest](https://github.com/vitest-dev/vitest)   |
 | vitepress  | VitePress — config, routing, markdown, theme, data loading            | [vuejs/vitepress](https://github.com/vuejs/vitepress)       |
+| pnpm       | pnpm — workspaces, catalogs, filtering, CLI, scripts                  | [pnpm/pnpm.io](https://github.com/pnpm/pnpm.io)             |
+| unocss     | UnoCSS — configuration, rules, shortcuts, presets, icons, attributify | [unocss/unocss](https://github.com/unocss/unocss)           |
 
 ### Vendored Skills
 
@@ -41,12 +41,12 @@ Synced from external repositories that maintain their own skills.
 
 | Skill                         | Description                                               | Source                                                                  |
 | ----------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------- |
-| vueuse-functions (Official)   | VueUse — 200+ Vue composition utilities                   | [vueuse/skills](https://github.com/vueuse/vueuse)                       |
-| tsdown (Official)             | tsdown — TypeScript library bundler powered by Rolldown   | [rolldown/tsdown](https://github.com/rolldown/tsdown)                   |
 | vue-best-practices            | Vue 3 + TypeScript best practices and patterns            | [vuejs-ai/skills](https://github.com/vuejs-ai/skills)                   |
 | vue-router-best-practices     | Vue Router best practices and navigation patterns         | [vuejs-ai/skills](https://github.com/vuejs-ai/skills)                   |
 | vue-testing-best-practices    | Vue testing best practices with Vitest and Vue Test Utils | [vuejs-ai/skills](https://github.com/vuejs-ai/skills)                   |
+| frontend-design (Official)    | Create distinctive, production-grade frontend interfaces  | [anthropics/skills](https://github.com/anthropics/skills)               |
 | web-design-guidelines         | Web design guidelines for building beautiful interfaces   | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) |
+| tsdown (Official)             | tsdown — TypeScript library bundler powered by Rolldown   | [rolldown/tsdown](https://github.com/rolldown/tsdown)                   |
 | gsap-core (Official)          | GSAP core API — tweens, easing, stagger, matchMedia       | [greensock/gsap-skills](https://github.com/greensock/gsap-skills)       |
 | gsap-timeline (Official)      | GSAP timelines — sequencing, position parameter, nesting  | [greensock/gsap-skills](https://github.com/greensock/gsap-skills)       |
 | gsap-scrolltrigger (Official) | GSAP ScrollTrigger — scroll-linked animations, pinning    | [greensock/gsap-skills](https://github.com/greensock/gsap-skills)       |
@@ -76,10 +76,8 @@ Fork this project to create your own customized skill collection.
 1. Fork or clone this repository
 2. Install dependencies: `pnpm install`
 3. Update `meta.ts` with your own projects and skill sources
-4. Run `pnpm start cleanup` to remove existing submodules and skills
-5. Run `pnpm start init` to clone the submodules
-6. Run `pnpm start sync` to sync vendored skills
-7. Ask your agent to `Generate skills for <project>` (recommended one at a time to manage token usage)
+4. Run `pnpm start init` — this will cleanup, init submodules, and sync skills in one go
+5. Ask your agent to `Generate skills for <project>` (recommended one at a time to manage token usage)
 
 See [AGENTS.md](./AGENTS.md) for detailed generation guidelines.
 

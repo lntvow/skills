@@ -87,8 +87,8 @@ interface VendorConfig {
   skills: Record<string, string> // sourceSkillName -> outputSkillName
 }
 
-async function initSubmodules(skipPrompt = false) {
-  const allProjects: Project[] = [
+function getAllProjects(): Project[] {
+  return [
     ...Object.entries(sources).map(([name, url]) => ({
       name,
       url,
@@ -102,91 +102,67 @@ async function initSubmodules(skipPrompt = false) {
       path: `vendor/${name}`,
     })),
   ]
+}
+
+async function initSubmodules(skipPrompt = false) {
+  const allProjects = getAllProjects()
 
   const spinner = p.spinner()
-
-  // Check for extra submodules that are not in meta.ts
-  const existingSubmodulePaths = getExistingSubmodulePaths()
-  const expectedPaths = new Set(allProjects.map(p => p.path))
-  const extraSubmodules = existingSubmodulePaths.filter(path => !expectedPaths.has(path))
-
-  if (extraSubmodules.length > 0) {
-    p.log.warn(`Found ${extraSubmodules.length} submodule(s) not in meta.ts:`)
-    for (const path of extraSubmodules) {
-      p.log.message(`  - ${path}`)
-    }
-
-    const shouldRemove = skipPrompt
-      ? true
-      : await p.confirm({
-          message: 'Remove these extra submodules?',
-          initialValue: true,
-        })
-
-    if (p.isCancel(shouldRemove)) {
-      p.cancel('Cancelled')
-      return
-    }
-
-    if (shouldRemove) {
-      for (const submodulePath of extraSubmodules) {
-        spinner.start(`Removing submodule: ${submodulePath}`)
-        try {
-          removeSubmodule(submodulePath)
-          spinner.stop(`Removed: ${submodulePath}`)
-        } catch (error) {
-          spinner.stop(`Failed to remove ${submodulePath}: ${error}`)
-        }
-      }
-    }
-  }
 
   const existingProjects = allProjects.filter(p => submoduleExists(p.path))
   const newProjects = allProjects.filter(p => !submoduleExists(p.path))
 
   if (newProjects.length === 0) {
     p.log.info('All submodules already initialized')
-    return
-  }
+  } else {
+    const selected = skipPrompt
+      ? newProjects
+      : await p.multiselect({
+          message: 'Select projects to initialize',
+          options: newProjects.map(project => ({
+            value: project,
+            label: `${project.name} (${project.type})`,
+            hint: project.url,
+          })),
+          initialValues: newProjects,
+        })
 
-  const selected = skipPrompt
-    ? newProjects
-    : await p.multiselect({
-        message: 'Select projects to initialize',
-        options: newProjects.map(project => ({
-          value: project,
-          label: `${project.name} (${project.type})`,
-          hint: project.url,
-        })),
-        initialValues: newProjects,
-      })
-
-  if (p.isCancel(selected)) {
-    p.cancel('Cancelled')
-    return
-  }
-
-  for (const project of selected as Project[]) {
-    spinner.start(`Adding submodule: ${project.name}`)
-
-    // Ensure parent directory exists
-    const parentDir = join(root, dirname(project.path))
-    if (!existsSync(parentDir)) {
-      mkdirSync(parentDir, { recursive: true })
+    if (p.isCancel(selected)) {
+      p.cancel('Cancelled')
+      return
     }
 
-    try {
-      exec(`git submodule add ${project.url} ${project.path}`)
-      spinner.stop(`Added: ${project.name}`)
-    } catch (error) {
-      spinner.stop(`Failed to add ${project.name}: ${error}`)
+    for (const project of selected as Project[]) {
+      spinner.start(`Adding submodule: ${project.name}`)
+
+      // Ensure parent directory exists
+      const parentDir = join(root, dirname(project.path))
+      if (!existsSync(parentDir)) {
+        mkdirSync(parentDir, { recursive: true })
+      }
+
+      try {
+        await execAsync(`git submodule add ${project.url} ${project.path}`)
+        spinner.stop(`Added: ${project.name}`)
+      } catch (error) {
+        spinner.stop(`Failed to add ${project.name}: ${error}`)
+      }
+    }
+
+    p.log.success('Submodules initialized')
+
+    if (existingProjects.length > 0) {
+      p.log.info(`Already initialized: ${existingProjects.map(p => p.name).join(', ')}`)
     }
   }
 
-  p.log.success('Submodules initialized')
-
-  if (existingProjects.length > 0) {
-    p.log.info(`Already initialized: ${existingProjects.map(p => p.name).join(', ')}`)
+  // Always pull content for all submodules
+  spinner.start('Pulling submodule contents...')
+  try {
+    await execAsync('git submodule update --init --recursive')
+    spinner.stop('Submodule contents pulled')
+  } catch (error) {
+    spinner.stop(`Failed to pull submodules: ${error}`)
   }
 }
 
@@ -242,43 +218,39 @@ async function syncSubmodules() {
     }
 
     // Check each skill: does upstream have new commits touching its source dir?
-    p.log.info(`Checking vendor: ${vendorName}`)
-    const pendingSkills = await getVendorSkillChanges(vendorPath, vendorSkillsPath, vendorConfig.skills)
+    // Also detect skills that have never been synced (output directory missing)
+    const upstreamChanges = await getVendorSkillChanges(vendorPath, vendorSkillsPath, vendorConfig.skills)
 
-    // Log per-skill results
-    for (const [sourceSkillName] of Object.entries(vendorConfig.skills)) {
-      const changed = pendingSkills.some(s => s.sourceSkillName === sourceSkillName)
-      if (changed) {
-        p.log.message(`Upstream changes: ${vendorName}/skills/${sourceSkillName}`)
-      } else {
-        p.log.message(`Already latest: ${vendorName}/skills/${sourceSkillName}`)
+    // Detect initial sync: skills whose output directory doesn't exist yet
+    const initialSync: { sourceSkillName: string; outputSkillName: string }[] = []
+    for (const [sourceSkillName, outputSkillName] of Object.entries(vendorConfig.skills)) {
+      const outputPath = join(root, 'skills', outputSkillName)
+      const sourceSkillPath = join(vendorSkillsPath, sourceSkillName)
+      if (!existsSync(outputPath) && existsSync(sourceSkillPath)) {
+        initialSync.push({ sourceSkillName, outputSkillName })
       }
     }
 
-    if (pendingSkills.length === 0) {
-      // No skill changes upstream → working tree stays clean
-      p.log.success(`No updates: ${vendorName} skills are already latest`)
-      continue
-    }
+    const pendingSkills = [...upstreamChanges, ...initialSync]
 
-    p.log.info(`${vendorName}: ${pendingSkills.length} skill(s) have upstream changes`)
+    if (pendingSkills.length === 0) continue
 
-    // Upstream has skill changes: update this specific submodule once
-    spinner.start(`Updating submodule: ${vendorName}`)
-    try {
-      await execAsync(`git submodule update --remote --merge ${vendorPath}`)
-      spinner.stop(`Updated submodule: ${vendorName}`)
-    } catch (error) {
-      spinner.stop(`Failed to update ${vendorName}: ${error}`)
-      continue
+    // Only update submodule if there are actual upstream changes
+    if (upstreamChanges.length > 0) {
+      spinner.start(`Updating submodule: ${vendorName}`)
+      try {
+        await execAsync(`git submodule update --remote --merge ${vendorPath}`)
+        spinner.stop(`Updated submodule: ${vendorName}`)
+      } catch (error) {
+        spinner.stop(`Failed to update ${vendorName}: ${error}`)
+        continue
+      }
     }
 
     // Sync each skill that has upstream changes
     for (const { sourceSkillName, outputSkillName } of pendingSkills) {
       const sourceSkillPath = join(vendorSkillsPath, sourceSkillName)
       const outputPath = join(root, 'skills', outputSkillName)
-
-      p.log.message(`Syncing: ${sourceSkillName} → ${outputSkillName}`)
 
       // Remove existing output directory to ensure clean sync
       if (existsSync(outputPath)) {
@@ -355,12 +327,15 @@ async function checkUpdates() {
   const updates: { name: string; type: string; detail: string; skills?: string[] }[] = []
 
   // Check sources — look for docs/ changes, fall back to README.md
+  const sourceCheckPaths = ['docs', 'README.md']
   for (const name of Object.keys(sources)) {
-    const path = join(root, 'sources', name)
-    if (!existsSync(path)) continue
+    const sourcePath = join(root, 'sources', name)
+    if (!existsSync(sourcePath)) continue
 
-    const checkPath = existsSync(join(path, 'docs')) ? 'docs' : 'README.md'
-    const hasChanges = execSafe(`git log HEAD..@{u} -- ${checkPath}`, path)
+    const checkPath = sourceCheckPaths.find(p => existsSync(join(sourcePath, p)))
+    if (!checkPath) continue
+
+    const hasChanges = execSafe(`git log HEAD..@{u} -- ${checkPath}`, sourcePath)
     if (hasChanges) {
       updates.push({ name, type: 'source', detail: `${checkPath} has upstream changes` })
     }
@@ -441,20 +416,7 @@ async function cleanup(skipPrompt = false) {
   let hasChanges = false
 
   // 1. Find and remove extra submodules
-  const allProjects: Project[] = [
-    ...Object.entries(sources).map(([name, url]) => ({
-      name,
-      url,
-      type: 'source' as const,
-      path: `sources/${name}`,
-    })),
-    ...Object.entries(vendors).map(([name, config]) => ({
-      name,
-      url: (config as VendorConfig).source,
-      type: 'vendor' as const,
-      path: `vendor/${name}`,
-    })),
-  ]
+  const allProjects = getAllProjects()
 
   const existingSubmodulePaths = getExistingSubmodulePaths()
   const expectedSubmodulePaths = new Set(allProjects.map(p => p.path))
@@ -544,7 +506,9 @@ async function main() {
   // Handle subcommands directly
   if (command === 'init') {
     p.intro('Skills Manager - Init')
+    await cleanup(skipPrompt)
     await initSubmodules(skipPrompt)
+    await syncSubmodules()
     p.outro('Done')
     return
   }
@@ -583,7 +547,7 @@ async function main() {
     message: 'What would you like to do?',
     options: [
       { value: 'sync', label: 'Sync submodules', hint: 'Pull latest and sync Type 2 skills' },
-      { value: 'init', label: 'Init submodules', hint: 'Add new submodules' },
+      { value: 'init', label: 'Init submodules', hint: 'Add, cleanup, and sync — full setup' },
       { value: 'check', label: 'Check updates', hint: 'See available updates' },
       { value: 'cleanup', label: 'Cleanup', hint: 'Remove unused submodules and skills' },
     ],
@@ -596,7 +560,9 @@ async function main() {
 
   switch (action) {
     case 'init':
+      await cleanup()
       await initSubmodules()
+      await syncSubmodules()
       break
     case 'sync':
       await syncSubmodules()

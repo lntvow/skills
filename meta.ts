@@ -8,14 +8,14 @@ export interface VendorSkillMeta {
  * Repositories to clone as submodules and generate skills from source
  */
 export const sources: Record<string, string> = {
+  'skills-cli': 'https://github.com/vercel-labs/skills',
   'vue': 'https://github.com/vuejs/docs',
-  'vite': 'https://github.com/vitejs/vite',
-  'unocss': 'https://github.com/unocss/unocss',
-  'pnpm': 'https://github.com/pnpm/pnpm.io',
   'pinia': 'https://github.com/vuejs/pinia',
+  'vite': 'https://github.com/vitejs/vite',
   'vitest': 'https://github.com/vitest-dev/vitest',
   'vitepress': 'https://github.com/vuejs/vitepress',
-  'skills-cli': 'https://github.com/vercel-labs/skills',
+  'pnpm': 'https://github.com/pnpm/pnpm.io',
+  'unocss': 'https://github.com/unocss/unocss',
 }
 
 /**
@@ -29,13 +29,6 @@ export const vendors: Record<string, VendorSkillMeta> = {
   //     'vueuse-functions': 'vueuse-functions',
   //   },
   // },
-  'tsdown': {
-    official: true,
-    source: 'https://github.com/rolldown/tsdown',
-    skills: {
-      tsdown: 'tsdown',
-    },
-  },
   'vuejs-ai': {
     source: 'https://github.com/vuejs-ai/skills',
     skills: {
@@ -44,10 +37,24 @@ export const vendors: Record<string, VendorSkillMeta> = {
       'vue-testing-best-practices': 'vue-testing-best-practices',
     },
   },
+  'anthropics-skills': {
+    official: true,
+    source: 'https://github.com/anthropics/skills',
+    skills: {
+      'frontend-design': 'frontend-design',
+    },
+  },
   'web-design-guidelines': {
     source: 'https://github.com/vercel-labs/agent-skills',
     skills: {
       'web-design-guidelines': 'web-design-guidelines',
+    },
+  },
+  'tsdown': {
+    official: true,
+    source: 'https://github.com/rolldown/tsdown',
+    skills: {
+      tsdown: 'tsdown',
     },
   },
   'gsap-skills': {

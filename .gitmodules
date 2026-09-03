@@ -22,3 +22,18 @@
 [submodule "sources/skills-cli"]
 	path = sources/skills-cli
 	url = https://github.com/vercel-labs/skills
+[submodule "vendor/vuejs-ai"]
+	path = vendor/vuejs-ai
+	url = https://github.com/vuejs-ai/skills
+[submodule "vendor/anthropics-skills"]
+	path = vendor/anthropics-skills
+	url = https://github.com/anthropics/skills
+[submodule "vendor/web-design-guidelines"]
+	path = vendor/web-design-guidelines
+	url = https://github.com/vercel-labs/agent-skills
+[submodule "vendor/tsdown"]
+	path = vendor/tsdown
+	url = https://github.com/rolldown/tsdown
+[submodule "vendor/gsap-skills"]
+	path = vendor/gsap-skills
+	url = https://github.com/greensock/gsap-skills

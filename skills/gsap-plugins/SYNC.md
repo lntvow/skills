@@ -1,5 +1,5 @@
 # Sync Info
 
 - **Source:** `vendor/gsap-skills/skills/gsap-plugins`
-- **Git SHA:** `aed9cfd3277740755f6bfc1155c7aa645403b760`
-- **Synced:** 2026-06-06
+- **Git SHA:** `5b909b9d9475884aedbca35375d12f963df4e898`
+- **Synced:** 2026-09-03

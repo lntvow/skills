@@ -1,5 +1,5 @@
 # Sync Info
 
 - **Source:** `vendor/anthropics-skills/skills/frontend-design`
-- **Git SHA:** `00756142ab04c82a447693cf373c4e0c554d1005`
-- **Synced:** 2026-06-08
+- **Git SHA:** `2235be7c60b551f5de82ade908fd3816455afcda`
+- **Synced:** 2026-09-03

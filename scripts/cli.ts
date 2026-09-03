@@ -1,7 +1,7 @@
 import * as p from '@clack/prompts'
 import { exec as execCb, execSync } from 'node:child_process'
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { manual, sources, vendors } from '../meta'
@@ -28,7 +28,7 @@ function execSafe(cmd: string, cwd = root): string | null {
 function execAsync(cmd: string, cwd = root): Promise<string> {
   return new Promise((resolve, reject) => {
     execCb(cmd, { cwd, encoding: 'utf-8' }, (err, stdout) => {
-      if (err) reject(err)
+      if (err) reject(new Error(err.stderr?.trim() || err.message))
       else resolve(stdout.trim())
     })
   })
@@ -42,35 +42,42 @@ async function execSafeAsync(cmd: string, cwd = root): Promise<string | null> {
   }
 }
 
-function submoduleExists(path: string): boolean {
-  const gitmodules = join(root, '.gitmodules')
-  if (!existsSync(gitmodules)) {
+type Spinner = ReturnType<typeof p.spinner>
+
+/** Run an async action under a spinner; returns whether it succeeded. */
+async function runStep(spinner: Spinner, label: string, action: () => Promise<unknown>): Promise<boolean> {
+  spinner.start(label)
+  try {
+    await action()
+    spinner.stop(label)
+    return true
+  } catch (error) {
+    spinner.stop(`Failed: ${error}`)
     return false
   }
-  const content = readFileSync(gitmodules, 'utf-8')
-  return content.includes(`path = ${path}`)
 }
 
-const RE_SUBMODULE_PATH = /path\s*=\s*(.+)/g
+async function fetchAllSubmodules(spinner: Spinner): Promise<boolean> {
+  return runStep(spinner, 'Fetching submodule remotes', () => execAsync('git submodule foreach git fetch'))
+}
 
-function getExistingSubmodulePaths(): string[] {
-  const gitmodules = join(root, '.gitmodules')
-  if (!existsSync(gitmodules)) {
-    return []
-  }
-  const content = readFileSync(gitmodules, 'utf-8')
-  const matches = content.matchAll(RE_SUBMODULE_PATH)
-  return Array.from(matches, match => match[1].trim())
+const LICENSE_NAMES = ['LICENSE', 'LICENSE.md', 'LICENSE.txt', 'license', 'license.md', 'license.txt']
+
+/** Parse submodule paths from .gitmodules via git, e.g. ["vendor/vuejs-ai", ...]. */
+function getSubmodulePaths(): string[] {
+  const raw = execSafe(`git config -f .gitmodules --get-regexp 'path'`) ?? ''
+  if (!raw) return []
+  return raw
+    .split('\n')
+    .map(line => line.split(/\s+/).at(-1) ?? '')
+    .filter(Boolean)
 }
 
 function removeSubmodule(submodulePath: string): void {
   // Deinitialize the submodule
   execSafe(`git submodule deinit -f ${submodulePath}`)
   // Remove from .git/modules
-  const gitModulesPath = join(root, '.git', 'modules', submodulePath)
-  if (existsSync(gitModulesPath)) {
-    rmSync(gitModulesPath, { recursive: true })
-  }
+  rmSync(join(root, '.git', 'modules', submodulePath), { recursive: true, force: true })
   // Remove from working tree and .gitmodules
   exec(`git rm -f ${submodulePath}`)
 }
@@ -82,10 +89,7 @@ interface Project {
   path: string
 }
 
-interface VendorConfig {
-  source: string
-  skills: Record<string, string> // sourceSkillName -> outputSkillName
-}
+type SkillPair = { sourceSkillName: string; outputSkillName: string }
 
 function getAllProjects(): Project[] {
   return [
@@ -97,7 +101,7 @@ function getAllProjects(): Project[] {
     })),
     ...Object.entries(vendors).map(([name, config]) => ({
       name,
-      url: (config as VendorConfig).source,
+      url: config.source,
       type: 'vendor' as const,
       path: `vendor/${name}`,
     })),
@@ -105,12 +109,11 @@ function getAllProjects(): Project[] {
 }
 
 async function initSubmodules(skipPrompt = false) {
-  const allProjects = getAllProjects()
-
   const spinner = p.spinner()
-
-  const existingProjects = allProjects.filter(p => submoduleExists(p.path))
-  const newProjects = allProjects.filter(p => !submoduleExists(p.path))
+  const allProjects = getAllProjects()
+  const existing = new Set(getSubmodulePaths())
+  const newProjects = allProjects.filter(project => !existing.has(project.path))
+  const existingProjects = allProjects.filter(project => existing.has(project.path))
 
   if (newProjects.length === 0) {
     p.log.info('All submodules already initialized')
@@ -133,20 +136,10 @@ async function initSubmodules(skipPrompt = false) {
     }
 
     for (const project of selected as Project[]) {
-      spinner.start(`Adding submodule: ${project.name}`)
-
-      // Ensure parent directory exists
-      const parentDir = join(root, dirname(project.path))
-      if (!existsSync(parentDir)) {
-        mkdirSync(parentDir, { recursive: true })
-      }
-
-      try {
-        await execAsync(`git submodule add ${project.url} ${project.path}`)
-        spinner.stop(`Added: ${project.name}`)
-      } catch (error) {
-        spinner.stop(`Failed to add ${project.name}: ${error}`)
-      }
+      mkdirSync(join(root, dirname(project.path)), { recursive: true })
+      await runStep(spinner, `Adding submodule: ${project.name}`, () =>
+        execAsync(`git submodule add ${project.url} ${project.path}`)
+      )
     }
 
     p.log.success('Submodules initialized')
@@ -157,53 +150,118 @@ async function initSubmodules(skipPrompt = false) {
   }
 
   // Always pull content for all submodules
-  spinner.start('Pulling submodule contents...')
-  try {
-    await execAsync('git submodule update --init --recursive')
-    spinner.stop('Submodule contents pulled')
-  } catch (error) {
-    spinner.stop(`Failed to pull submodules: ${error}`)
-  }
+  await runStep(spinner, 'Pulling submodule contents', () => execAsync('git submodule update --init --recursive'))
 }
 
 /**
- * Check which skills in a vendor have upstream changes.
- * Returns the list of skills that have new commits touching their source dir.
- * Does NOT log anything — caller decides how to report.
+ * Get the commit SHA pinned in the superproject (gitlink) for a submodule.
+ * This is "what we last committed", independent of whether the submodule's own
+ * HEAD is detached or on a branch.
  */
-async function getVendorSkillChanges(
+function getSubmodulePinnedSha(submodulePath: string): string | null {
+  const line = execSafe(`git ls-tree HEAD ${submodulePath}`)
+  if (!line) return null
+  // Output format: "160000 commit <sha>\t<path>"
+  return line.split(/\s+/)[2] ?? null
+}
+
+/**
+ * Resolve the remote default-branch ref (e.g. "origin/main") for a submodule
+ * without touching the network. Falls back to scanning remote-tracking branches.
+ */
+function getSubmoduleRemoteHead(submoduleDir: string): string | null {
+  const originHead = execSafe(`git symbolic-ref --short refs/remotes/origin/HEAD`, submoduleDir)
+  if (originHead) return originHead
+  const branches = execSafe(`git for-each-ref --format=%(refname:short) refs/remotes/origin`, submoduleDir)
+  if (!branches) return null
+  const list = branches.split('\n')
+  return (
+    list.find(ref => ref === 'origin/main') ??
+    list.find(ref => ref === 'origin/master') ??
+    list.find(ref => /^origin\/[^/]+$/.test(ref)) ??
+    null
+  )
+}
+
+/**
+ * Read the last-synced commit SHA recorded in a skill's SYNC.md, if present.
+ * This is the true "we already have this version" marker (the pinned gitlink is
+ * only updated when the superproject is committed, so it lags behind local syncs).
+ */
+function getSyncedSha(outputPath: string): string | null {
+  const syncMd = join(outputPath, 'SYNC.md')
+  if (!existsSync(syncMd)) return null
+  // The SHA lives on the "**Git SHA:** `...`" line; parse the backticked hex.
+  const line = readFileSync(syncMd, 'utf-8')
+    .split('\n')
+    .find(l => l.includes('Git SHA'))
+  return line?.match(/`([0-9a-f]{7,40})`/i)?.[1] ?? null
+}
+
+/** Whether a commit SHA resolves inside a submodule (guards against rewritten history). */
+function shaExists(repoDir: string, sha: string): boolean {
+  return execSafe(`git rev-parse --verify --quiet ${sha}`, repoDir) !== null
+}
+
+/**
+ * Plan what needs syncing for one vendor's skills.
+ *
+ * Returns two groups:
+ * - `upstream`: has a SYNC.md record, but upstream has new commits touching the
+ *   skill dir since that record (or the recorded SHA can no longer be resolved,
+ *   e.g. upstream rewrote history) -> incremental re-sync.
+ * - `initial`: no sync record yet (missing output dir or SYNC.md) -> full sync.
+ *
+ * Skills whose source dir doesn't exist are ignored. Works even when the
+ * submodule is in detached HEAD.
+ */
+async function planVendorSync(
   vendorPath: string,
   vendorSkillsPath: string,
   skills: Record<string, string>
-): Promise<{ sourceSkillName: string; outputSkillName: string }[]> {
-  const changed: { sourceSkillName: string; outputSkillName: string }[] = []
+): Promise<{ upstream: SkillPair[]; initial: SkillPair[] }> {
+  const upstream: SkillPair[] = []
+  const initial: SkillPair[] = []
+  const vendorName = basename(vendorPath)
+  const remoteRef = getSubmoduleRemoteHead(vendorPath)
+  if (!remoteRef) p.log.warn(`Cannot resolve upstream remote for ${vendorName}`)
+
   for (const [sourceSkillName, outputSkillName] of Object.entries(skills)) {
     const sourceSkillPath = join(vendorSkillsPath, sourceSkillName)
     if (!existsSync(sourceSkillPath)) continue
-    const hasChanges = await execSafeAsync(`git log HEAD..@{u} -- skills/${sourceSkillName}`, vendorPath)
-    if (hasChanges) changed.push({ sourceSkillName, outputSkillName })
+
+    const outputPath = join(root, 'skills', outputSkillName)
+    const startSha = getSyncedSha(outputPath)
+
+    if (!startSha) {
+      initial.push({ sourceSkillName, outputSkillName })
+      continue
+    }
+    if (!remoteRef) continue
+
+    if (!shaExists(vendorPath, startSha)) {
+      // Recorded SHA no longer resolvable (upstream history rewritten/pruned)
+      upstream.push({ sourceSkillName, outputSkillName })
+      continue
+    }
+
+    const hasChanges = await execSafeAsync(
+      `git log ${startSha}..${remoteRef} --oneline -- skills/${sourceSkillName}`,
+      vendorPath
+    )
+    if (hasChanges) upstream.push({ sourceSkillName, outputSkillName })
   }
-  return changed
+  return { upstream, initial }
 }
 
 async function syncSubmodules() {
   const spinner = p.spinner()
-
-  // Only fetch remote changes, don't modify working tree yet
-  spinner.start('Fetching submodule remotes...')
-  try {
-    await execAsync('git submodule foreach git fetch')
-    spinner.stop('Fetched remote changes')
-  } catch (error) {
-    spinner.stop(`Failed to fetch submodules: ${error}`)
-    return
-  }
+  if (!(await fetchAllSubmodules(spinner))) return
 
   let anySynced = false
 
   // Sync Type 2 skills — only update submodules that have skill changes upstream
-  for (const [vendorName, config] of Object.entries(vendors)) {
-    const vendorConfig = config as VendorConfig
+  for (const [vendorName, vendorConfig] of Object.entries(vendors)) {
     const vendorPath = join(root, 'vendor', vendorName)
     const vendorSkillsPath = join(vendorPath, 'skills')
 
@@ -211,74 +269,35 @@ async function syncSubmodules() {
       p.log.warn(`Vendor submodule not found: ${vendorName}. Run init first.`)
       continue
     }
-
     if (!existsSync(vendorSkillsPath)) {
       p.log.warn(`No skills directory in vendor/${vendorName}/skills/`)
       continue
     }
 
-    // Check each skill: does upstream have new commits touching its source dir?
-    // Also detect skills that have never been synced (output directory missing)
-    const upstreamChanges = await getVendorSkillChanges(vendorPath, vendorSkillsPath, vendorConfig.skills)
-
-    // Detect initial sync: skills whose output directory doesn't exist yet
-    const initialSync: { sourceSkillName: string; outputSkillName: string }[] = []
-    for (const [sourceSkillName, outputSkillName] of Object.entries(vendorConfig.skills)) {
-      const outputPath = join(root, 'skills', outputSkillName)
-      const sourceSkillPath = join(vendorSkillsPath, sourceSkillName)
-      if (!existsSync(outputPath) && existsSync(sourceSkillPath)) {
-        initialSync.push({ sourceSkillName, outputSkillName })
-      }
-    }
-
-    const pendingSkills = [...upstreamChanges, ...initialSync]
-
+    // Classify what needs doing: skills with upstream changes since the recorded
+    // sync point, plus skills with no sync record yet -> first-time full sync.
+    const { upstream, initial } = await planVendorSync(vendorPath, vendorSkillsPath, vendorConfig.skills)
+    const pendingSkills = [...upstream, ...initial]
     if (pendingSkills.length === 0) continue
 
-    // Only update submodule if there are actual upstream changes
-    if (upstreamChanges.length > 0) {
-      spinner.start(`Updating submodule: ${vendorName}`)
-      try {
-        await execAsync(`git submodule update --remote --merge ${vendorPath}`)
-        spinner.stop(`Updated submodule: ${vendorName}`)
-      } catch (error) {
-        spinner.stop(`Failed to update ${vendorName}: ${error}`)
-        continue
-      }
+    // Bring the submodule forward only when there are real upstream changes
+    if (upstream.length > 0) {
+      const ok = await runStep(spinner, `Updating submodule: ${vendorName}`, () =>
+        execAsync(`git submodule update --remote --merge ${vendorPath}`)
+      )
+      if (!ok) continue
     }
 
-    // Sync each skill that has upstream changes
     for (const { sourceSkillName, outputSkillName } of pendingSkills) {
       const sourceSkillPath = join(vendorSkillsPath, sourceSkillName)
       const outputPath = join(root, 'skills', outputSkillName)
 
-      // Remove existing output directory to ensure clean sync
-      if (existsSync(outputPath)) {
-        rmSync(outputPath, { recursive: true })
-      }
-      mkdirSync(outputPath, { recursive: true })
+      // Replace the output dir with a clean recursive copy of the source skill
+      rmSync(outputPath, { recursive: true, force: true })
+      cpSync(sourceSkillPath, outputPath, { recursive: true })
 
-      // Copy all files from source skill to output
-      const files = readdirSync(sourceSkillPath, { recursive: true, withFileTypes: true })
-      for (const file of files) {
-        if (file.isFile()) {
-          const fullPath = join(file.parentPath, file.name)
-          const relativePath = fullPath.replace(sourceSkillPath, '')
-          const destPath = join(outputPath, relativePath)
-
-          // Ensure destination directory exists
-          const destDir = dirname(destPath)
-          if (!existsSync(destDir)) {
-            mkdirSync(destDir, { recursive: true })
-          }
-
-          cpSync(fullPath, destPath)
-        }
-      }
-
-      // Copy LICENSE file from vendor repo root if it exists
-      const licenseNames = ['LICENSE', 'LICENSE.md', 'LICENSE.txt', 'license', 'license.md', 'license.txt']
-      for (const licenseName of licenseNames) {
+      // Copy LICENSE from vendor repo root if it exists
+      for (const licenseName of LICENSE_NAMES) {
         const licensePath = join(vendorPath, licenseName)
         if (existsSync(licensePath)) {
           cpSync(licensePath, join(outputPath, 'LICENSE.md'))
@@ -286,45 +305,30 @@ async function syncSubmodules() {
         }
       }
 
-      // Update SYNC.md
-      const date = new Date().toISOString().split('T')[0]
-      const syncPath = join(outputPath, 'SYNC.md')
+      // Record the sync point in SYNC.md
       const sha = await execSafeAsync(`git log -1 --format=%H -- skills/${sourceSkillName}`, vendorPath)
-
+      const date = new Date().toISOString().split('T')[0]
       const syncContent = `# Sync Info
 
 - **Source:** \`vendor/${vendorName}/skills/${sourceSkillName}\`
 - **Git SHA:** \`${sha}\`
 - **Synced:** ${date}
 `
-
-      writeFileSync(syncPath, syncContent)
+      writeFileSync(join(outputPath, 'SYNC.md'), syncContent)
 
       p.log.success(`Synced: ${sourceSkillName} → ${outputSkillName}`)
       anySynced = true
     }
   }
 
-  if (anySynced) {
-    p.log.success('Skills synced')
-  } else {
-    p.log.success('All skills are already latest — nothing to sync')
-  }
+  p.log.success(anySynced ? 'Skills synced' : 'All skills are already latest — nothing to sync')
 }
 
 async function checkUpdates() {
   const spinner = p.spinner()
-  spinner.start('Fetching remote changes...')
+  if (!(await fetchAllSubmodules(spinner))) return
 
-  try {
-    await execAsync('git submodule foreach git fetch')
-    spinner.stop('Fetched remote changes')
-  } catch (error) {
-    spinner.stop(`Failed to fetch: ${error}`)
-    return
-  }
-
-  const updates: { name: string; type: string; detail: string; skills?: string[] }[] = []
+  const updates: { name: string; type: 'source' | 'vendor'; detail: string; skills?: string[] }[] = []
 
   // Check sources — look for docs/ changes, fall back to README.md
   const sourceCheckPaths = ['docs', 'README.md']
@@ -335,43 +339,50 @@ async function checkUpdates() {
     const checkPath = sourceCheckPaths.find(p => existsSync(join(sourcePath, p)))
     if (!checkPath) continue
 
-    const hasChanges = execSafe(`git log HEAD..@{u} -- ${checkPath}`, sourcePath)
+    const pinnedSha = getSubmodulePinnedSha(`sources/${name}`)
+    const remoteRef = getSubmoduleRemoteHead(sourcePath)
+    if (!pinnedSha || !remoteRef) continue
+
+    const hasChanges = execSafe(`git log ${pinnedSha}..${remoteRef} --oneline -- ${checkPath}`, sourcePath)
     if (hasChanges) {
       updates.push({ name, type: 'source', detail: `${checkPath} has upstream changes` })
     }
   }
 
   // Check vendors
-  for (const [name, config] of Object.entries(vendors)) {
-    const vendorConfig = config as VendorConfig
+  for (const [name, vendorConfig] of Object.entries(vendors)) {
     const vendorPath = join(root, 'vendor', name)
     const vendorSkillsPath = join(vendorPath, 'skills')
+    if (!existsSync(vendorPath) || !existsSync(vendorSkillsPath)) continue
 
-    if (!existsSync(vendorPath)) continue
-    if (!existsSync(vendorSkillsPath)) continue
-
-    const changed = await getVendorSkillChanges(vendorPath, vendorSkillsPath, vendorConfig.skills)
-    if (changed.length > 0) {
+    const { upstream, initial } = await planVendorSync(vendorPath, vendorSkillsPath, vendorConfig.skills)
+    if (upstream.length > 0) {
       updates.push({
         name,
         type: 'vendor',
-        detail: `${changed.length} skill(s) have upstream changes`,
-        skills: changed.map(s => s.sourceSkillName),
+        detail: `${upstream.length} skill(s) have upstream changes`,
+        skills: upstream.map(s => s.sourceSkillName),
+      })
+    }
+    if (initial.length > 0) {
+      updates.push({
+        name,
+        type: 'vendor',
+        detail: `${initial.length} skill(s) not synced yet`,
+        skills: initial.map(s => s.sourceSkillName),
       })
     }
   }
 
   if (updates.length === 0) {
     p.log.success('All submodules are up to date')
-  } else {
-    p.log.info('Updates available:')
-    for (const update of updates) {
-      p.log.message(`  ${update.name}: ${update.detail}`)
-      if (update.skills) {
-        for (const skill of update.skills) {
-          p.log.message(`    - ${skill}`)
-        }
-      }
+    return
+  }
+  p.log.info('Updates available:')
+  for (const update of updates) {
+    p.log.message(`  ${update.name}: ${update.detail}`)
+    for (const skill of update.skills ?? []) {
+      p.log.message(`    - ${skill}`)
     }
   }
 }
@@ -386,8 +397,7 @@ function getExpectedSkillNames(): Set<string> {
 
   // Skills from vendors (use the output skill name)
   for (const config of Object.values(vendors)) {
-    const vendorConfig = config as VendorConfig
-    for (const outputName of Object.values(vendorConfig.skills)) {
+    for (const outputName of Object.values(config.skills)) {
       expected.add(outputName)
     }
   }
@@ -411,131 +421,130 @@ function getExistingSkillNames(): string[] {
     .map(entry => entry.name)
 }
 
+/**
+ * Confirm and remove "extra" items (submodules / skills) no longer referenced by
+ * meta.ts. Returns 'removed' | 'skipped' | 'cancelled' | 'none'.
+ */
+async function removeExtra(
+  spinner: Spinner,
+  kind: string,
+  items: string[],
+  skipPrompt: boolean,
+  describe: (item: string) => string,
+  remove: (item: string) => void | Promise<void>
+): Promise<'removed' | 'skipped' | 'cancelled' | 'none'> {
+  if (items.length === 0) return 'none'
+
+  p.log.warn(`Found ${items.length} ${kind} not in meta.ts:`)
+  for (const item of items) p.log.message(`  - ${describe(item)}`)
+
+  const shouldRemove = skipPrompt
+    ? true
+    : await p.confirm({ message: `Remove these extra ${kind}?`, initialValue: true })
+  if (p.isCancel(shouldRemove)) return 'cancelled'
+  if (!shouldRemove) return 'skipped'
+
+  for (const item of items) {
+    await runStep(spinner, `Removing ${describe(item)}`, async () => remove(item))
+  }
+  return 'removed'
+}
+
 async function cleanup(skipPrompt = false) {
   const spinner = p.spinner()
-  let hasChanges = false
 
-  // 1. Find and remove extra submodules
-  const allProjects = getAllProjects()
+  // 1. Remove submodules not referenced by meta.ts
+  const expectedSubmodulePaths = new Set(getAllProjects().map(p => p.path))
+  const extraSubmodules = getSubmodulePaths().filter(path => !expectedSubmodulePaths.has(path))
+  const submodulesResult = await removeExtra(
+    spinner,
+    'submodule(s)',
+    extraSubmodules,
+    skipPrompt,
+    path => path,
+    path => removeSubmodule(path)
+  )
+  if (submodulesResult === 'cancelled') return
 
-  const existingSubmodulePaths = getExistingSubmodulePaths()
-  const expectedSubmodulePaths = new Set(allProjects.map(p => p.path))
-  const extraSubmodules = existingSubmodulePaths.filter(path => !expectedSubmodulePaths.has(path))
-
-  if (extraSubmodules.length > 0) {
-    p.log.warn(`Found ${extraSubmodules.length} submodule(s) not in meta.ts:`)
-    for (const path of extraSubmodules) {
-      p.log.message(`  - ${path}`)
-    }
-
-    const shouldRemove = skipPrompt
-      ? true
-      : await p.confirm({
-          message: 'Remove these extra submodules?',
-          initialValue: true,
-        })
-
-    if (p.isCancel(shouldRemove)) {
-      p.cancel('Cancelled')
-      return
-    }
-
-    if (shouldRemove) {
-      hasChanges = true
-      for (const submodulePath of extraSubmodules) {
-        spinner.start(`Removing submodule: ${submodulePath}`)
-        try {
-          removeSubmodule(submodulePath)
-          spinner.stop(`Removed: ${submodulePath}`)
-        } catch (error) {
-          spinner.stop(`Failed to remove ${submodulePath}: ${error}`)
-        }
-      }
-    }
-  }
-
-  // 2. Find and remove extra skills
-  const existingSkills = getExistingSkillNames()
+  // 2. Remove skill output directories not referenced by meta.ts
   const expectedSkills = getExpectedSkillNames()
-  const extraSkills = existingSkills.filter(name => !expectedSkills.has(name))
+  const extraSkills = getExistingSkillNames().filter(name => !expectedSkills.has(name))
+  const skillsResult = await removeExtra(
+    spinner,
+    'skill(s)',
+    extraSkills,
+    skipPrompt,
+    name => `skills/${name}`,
+    name => rmSync(join(root, 'skills', name), { recursive: true, force: true })
+  )
+  if (skillsResult === 'cancelled') return
 
-  if (extraSkills.length > 0) {
-    p.log.warn(`Found ${extraSkills.length} skill(s) not in meta.ts:`)
-    for (const name of extraSkills) {
-      p.log.message(`  - skills/${name}`)
-    }
-
-    const shouldRemove = skipPrompt
-      ? true
-      : await p.confirm({
-          message: 'Remove these extra skills?',
-          initialValue: true,
-        })
-
-    if (p.isCancel(shouldRemove)) {
-      p.cancel('Cancelled')
-      return
-    }
-
-    if (shouldRemove) {
-      hasChanges = true
-      for (const skillName of extraSkills) {
-        spinner.start(`Removing skill: ${skillName}`)
-        try {
-          rmSync(join(root, 'skills', skillName), { recursive: true })
-          spinner.stop(`Removed: skills/${skillName}`)
-        } catch (error) {
-          spinner.stop(`Failed to remove skills/${skillName}: ${error}`)
-        }
-      }
-    }
-  }
-
-  if (!hasChanges && extraSubmodules.length === 0 && extraSkills.length === 0) {
+  if (submodulesResult === 'none' && skillsResult === 'none') {
     p.log.success('Everything is clean, no unused submodules or skills found')
-  } else if (hasChanges) {
+  } else if (submodulesResult === 'removed' || skillsResult === 'removed') {
     p.log.success('Cleanup completed')
   }
 }
 
+interface CommandDef {
+  name: string
+  title: string
+  menuLabel: string
+  hint: string
+  run: (skip: boolean) => Promise<void>
+}
+
+const COMMANDS: CommandDef[] = [
+  {
+    name: 'sync',
+    title: 'Sync',
+    menuLabel: 'Sync submodules',
+    hint: 'Pull latest and sync Type 2 skills',
+    run: () => syncSubmodules(),
+  },
+  {
+    name: 'init',
+    title: 'Init',
+    menuLabel: 'Init submodules',
+    hint: 'Add, cleanup, and sync — full setup',
+    run: async skip => {
+      await cleanup(skip)
+      await initSubmodules(skip)
+      await syncSubmodules()
+    },
+  },
+  {
+    name: 'check',
+    title: 'Check',
+    menuLabel: 'Check updates',
+    hint: 'See available updates',
+    run: () => checkUpdates(),
+  },
+  {
+    name: 'cleanup',
+    title: 'Cleanup',
+    menuLabel: 'Cleanup',
+    hint: 'Remove unused submodules and skills',
+    run: skip => cleanup(skip),
+  },
+]
+
 async function main() {
   const args = process.argv.slice(2)
-  const skipPrompt = args.includes('-y') || args.includes('--yes')
+  const skip = args.includes('-y') || args.includes('--yes')
   const command = args.find(arg => !arg.startsWith('-'))
 
-  // Handle subcommands directly
-  if (command === 'init') {
-    p.intro('Skills Manager - Init')
-    await cleanup(skipPrompt)
-    await initSubmodules(skipPrompt)
-    await syncSubmodules()
-    p.outro('Done')
-    return
-  }
-
-  if (command === 'sync') {
-    p.intro('Skills Manager - Sync')
-    await syncSubmodules()
-    p.outro('Done')
-    return
-  }
-
-  if (command === 'check') {
-    p.intro('Skills Manager - Check')
-    await checkUpdates()
-    p.outro('Done')
-    return
-  }
-
-  if (command === 'cleanup') {
-    p.intro('Skills Manager - Cleanup')
-    await cleanup(skipPrompt)
+  // Run a named subcommand directly
+  const matched = command ? COMMANDS.find(c => c.name === command) : undefined
+  if (matched) {
+    p.intro(`Skills Manager - ${matched.title}`)
+    await matched.run(skip)
     p.outro('Done')
     return
   }
 
   // No subcommand: show interactive menu (requires interaction)
-  if (skipPrompt) {
+  if (skip) {
     p.log.error('Command required when using -y flag')
     p.log.info('Available commands: init, sync, check, cleanup')
     process.exit(1)
@@ -545,12 +554,7 @@ async function main() {
 
   const action = await p.select({
     message: 'What would you like to do?',
-    options: [
-      { value: 'sync', label: 'Sync submodules', hint: 'Pull latest and sync Type 2 skills' },
-      { value: 'init', label: 'Init submodules', hint: 'Add, cleanup, and sync — full setup' },
-      { value: 'check', label: 'Check updates', hint: 'See available updates' },
-      { value: 'cleanup', label: 'Cleanup', hint: 'Remove unused submodules and skills' },
-    ],
+    options: COMMANDS.map(c => ({ value: c.name, label: c.menuLabel, hint: c.hint })),
   })
 
   if (p.isCancel(action)) {
@@ -558,24 +562,8 @@ async function main() {
     process.exit(0)
   }
 
-  switch (action) {
-    case 'init':
-      await cleanup()
-      await initSubmodules()
-      await syncSubmodules()
-      break
-    case 'sync':
-      await syncSubmodules()
-      break
-    case 'check':
-      await checkUpdates()
-      break
-    case 'cleanup':
-      await cleanup()
-      break
-    default:
-  }
-
+  const selected = COMMANDS.find(c => c.name === action)
+  if (selected) await selected.run(false)
   p.outro('Done')
 }
 

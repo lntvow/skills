@@ -55,6 +55,14 @@ Synced from external repositories that maintain their own skills.
 | gsap-performance (Official)   | GSAP performance — transforms, will-change, batching      | [greensock/gsap-skills](https://github.com/greensock/gsap-skills)       |
 | gsap-utils (Official)         | GSAP utilities — clamp, mapRange, random, snap, toArray   | [greensock/gsap-skills](https://github.com/greensock/gsap-skills)       |
 
+### Hand-written Skills
+
+Authored by lntvow — personal workflow skills.
+
+| Skill            | Description                                                               |
+| ---------------- | ------------------------------------------------------------------------- |
+| git-commit-style | Generate commits matching a repo's git history style (current user first) |
+
 ## FAQ
 
 ### What Makes This Collection Different?

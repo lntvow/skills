@@ -17,7 +17,7 @@ There are two types of skill sources. The project lists are defined in `meta.ts`
 
 For OSS projects **without existing skills**. We clone the repo as a submodule and generate skills from their documentation.
 
-- **Projects:** Vue, Nuxt, Vite, UnoCSS
+- **Projects:** skills-cli, Pinia, Vite, Vitest, VitePress, pnpm, UnoCSS
 - **Workflow:** Read docs → Understand → Generate skills
 - **Source:** `sources/{project}/docs/` — if no `docs/` directory exists, fall back to reading `sources/{project}/README.md`
 
@@ -25,7 +25,7 @@ For OSS projects **without existing skills**. We clone the repo as a submodule a
 
 For projects that **already maintain their own skills**. We clone their repo as a submodule and sync specified skills to ours.
 
-- **Projects:** Slidev, VueUse
+- **Projects:** vuejs-ai, anthropics-skills, web-design-guidelines, tsdown, gsap-skills
 - **Workflow:** Pull updates → Copy specified skills (with optional renaming)
 - **Source:** `vendor/{project}/skills/{skill-name}/`
 - **Config:** Each vendor specifies which skills to sync and their output names in `meta.ts`

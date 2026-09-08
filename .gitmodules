@@ -1,6 +1,3 @@
-[submodule "sources/vue"]
-	path = sources/vue
-	url = https://github.com/vuejs/docs
 [submodule "sources/vite"]
 	path = sources/vite
 	url = https://github.com/vitejs/vite

@@ -9,7 +9,6 @@ export interface VendorSkillMeta {
  */
 export const sources: Record<string, string> = {
   'skills-cli': 'https://github.com/vercel-labs/skills',
-  'vue': 'https://github.com/vuejs/docs',
   'pinia': 'https://github.com/vuejs/pinia',
   'vite': 'https://github.com/vitejs/vite',
   'vitest': 'https://github.com/vitest-dev/vitest',

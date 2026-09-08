@@ -63,9 +63,15 @@ async function fetchAllSubmodules(spinner: Spinner): Promise<boolean> {
 
 const LICENSE_NAMES = ['LICENSE', 'LICENSE.md', 'LICENSE.txt', 'license', 'license.md', 'license.txt']
 
-/** Parse submodule paths from .gitmodules via git, e.g. ["vendor/vuejs-ai", ...]. */
+/**
+ * Parse submodule paths from .gitmodules via git, e.g. ["vendor/vuejs-ai", ...].
+ *
+ * Note: no quotes around the `path` regexp — execSync shells out through cmd.exe on
+ * Windows, which treats single quotes literally (unlike POSIX sh), so `'path'` would
+ * never match. `path` is a plain token, safe on both platforms.
+ */
 function getSubmodulePaths(): string[] {
-  const raw = execSafe(`git config -f .gitmodules --get-regexp 'path'`) ?? ''
+  const raw = execSafe(`git config -f .gitmodules --get-regexp path`) ?? ''
   if (!raw) return []
   return raw
     .split('\n')

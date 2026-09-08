@@ -1,6 +1,6 @@
 # lntvow's Skills
 
-A curated collection of [Agent Skills](https://agentskills.io/home) focused on Vue.js ecosystem tooling — Vue, Vite, UnoCSS, Pinia, Vitest, VitePress, and more. Skills are generated from official documentation using git submodules for accurate, up-to-date context.
+A curated collection of [Agent Skills](https://agentskills.io/home) focused on Vue.js ecosystem tooling — Vue best practices, Vite, UnoCSS, Pinia, Vitest, VitePress, and more. Skills are generated from official documentation using git submodules for accurate, up-to-date context.
 
 > Template inspired by [antfu/skills](https://github.com/antfu/skills).
 
@@ -27,7 +27,6 @@ Unopinionated but tilted toward modern stacks (TypeScript, ESM, Composition API)
 | Skill      | Description                                                           | Source                                                      |
 | ---------- | --------------------------------------------------------------------- | ----------------------------------------------------------- |
 | skills-cli | Skills CLI — install, manage, discover, and create agent skills       | [vercel-labs/skills](https://github.com/vercel-labs/skills) |
-| vue        | Vue 3 — reactivity, SFC, components, composables, TypeScript, SSR     | [vuejs/docs](https://github.com/vuejs/docs)                 |
 | pinia      | Pinia — stores, state, getters, actions, plugins, SSR, testing        | [vuejs/pinia](https://github.com/vuejs/pinia)               |
 | vite       | Vite — config, plugins, asset handling, env variables, build, SSR     | [vitejs/vite](https://github.com/vitejs/vite)               |
 | vitest     | Vitest — test API, assertions, mocking, configuration, CLI            | [vitest-dev/vitest](https://github.com/vitest-dev/vitest)   |

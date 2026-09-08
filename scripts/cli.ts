@@ -1,5 +1,5 @@
 import * as p from '@clack/prompts'
-import { exec as execCb, execSync } from 'node:child_process'
+import { exec as execCb, execFileSync, execSync } from 'node:child_process'
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join } from 'node:path'
 import process from 'node:process'
@@ -19,6 +19,10 @@ function execSafe(cmd: string, cwd = root): string | null {
   } catch {
     return null
   }
+}
+
+function execFile(file: string, args: string[], cwd = root): string {
+  return execFileSync(file, args, { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim()
 }
 
 /**
@@ -75,17 +79,17 @@ function getSubmodulePaths(): string[] {
   if (!raw) return []
   return raw
     .split('\n')
-    .map(line => line.split(/\s+/).at(-1) ?? '')
+    .map(line => line.trim().split(/\s+/).at(-1) ?? '')
     .filter(Boolean)
 }
 
 function removeSubmodule(submodulePath: string): void {
   // Deinitialize the submodule
-  execSafe(`git submodule deinit -f ${submodulePath}`)
-  // Remove from .git/modules
-  rmSync(join(root, '.git', 'modules', submodulePath), { recursive: true, force: true })
+  execFile('git', ['submodule', 'deinit', '-f', '--', submodulePath])
   // Remove from working tree and .gitmodules
-  exec(`git rm -f ${submodulePath}`)
+  execFile('git', ['rm', '-f', '--', submodulePath])
+  // Remove from .git/modules only after git rm succeeds
+  rmSync(join(root, '.git', 'modules', submodulePath), { recursive: true, force: true })
 }
 
 interface Project {
@@ -96,6 +100,8 @@ interface Project {
 }
 
 type SkillPair = { sourceSkillName: string; outputSkillName: string }
+
+type CommandResult = 'completed' | 'cancelled' | 'failed'
 
 function getAllProjects(): Project[] {
   return [
@@ -114,7 +120,7 @@ function getAllProjects(): Project[] {
   ]
 }
 
-async function initSubmodules(skipPrompt = false) {
+async function initSubmodules(skipPrompt = false): Promise<CommandResult> {
   const spinner = p.spinner()
   const allProjects = getAllProjects()
   const existing = new Set(getSubmodulePaths())
@@ -137,15 +143,15 @@ async function initSubmodules(skipPrompt = false) {
         })
 
     if (p.isCancel(selected)) {
-      p.cancel('Cancelled')
-      return
+      return 'cancelled'
     }
 
     for (const project of selected as Project[]) {
       mkdirSync(join(root, dirname(project.path)), { recursive: true })
-      await runStep(spinner, `Adding submodule: ${project.name}`, () =>
+      const ok = await runStep(spinner, `Adding submodule: ${project.name}`, () =>
         execAsync(`git submodule add ${project.url} ${project.path}`)
       )
+      if (!ok) return 'failed'
     }
 
     p.log.success('Submodules initialized')
@@ -156,7 +162,10 @@ async function initSubmodules(skipPrompt = false) {
   }
 
   // Always pull content for all submodules
-  await runStep(spinner, 'Pulling submodule contents', () => execAsync('git submodule update --init --recursive'))
+  const ok = await runStep(spinner, 'Pulling submodule contents', () =>
+    execAsync('git submodule update --init --recursive')
+  )
+  return ok ? 'completed' : 'failed'
 }
 
 /**
@@ -260,9 +269,9 @@ async function planVendorSync(
   return { upstream, initial }
 }
 
-async function syncSubmodules() {
+async function syncSubmodules(): Promise<boolean> {
   const spinner = p.spinner()
-  if (!(await fetchAllSubmodules(spinner))) return
+  if (!(await fetchAllSubmodules(spinner))) return false
 
   let anySynced = false
 
@@ -291,7 +300,7 @@ async function syncSubmodules() {
       const ok = await runStep(spinner, `Updating submodule: ${vendorName}`, () =>
         execAsync(`git submodule update --remote --merge ${vendorPath}`)
       )
-      if (!ok) continue
+      if (!ok) return false
     }
 
     for (const { sourceSkillName, outputSkillName } of pendingSkills) {
@@ -328,11 +337,12 @@ async function syncSubmodules() {
   }
 
   p.log.success(anySynced ? 'Skills synced' : 'All skills are already latest — nothing to sync')
+  return true
 }
 
-async function checkUpdates() {
+async function checkUpdates(): Promise<boolean> {
   const spinner = p.spinner()
-  if (!(await fetchAllSubmodules(spinner))) return
+  if (!(await fetchAllSubmodules(spinner))) return false
 
   const updates: { name: string; type: 'source' | 'vendor'; detail: string; skills?: string[] }[] = []
 
@@ -382,7 +392,7 @@ async function checkUpdates() {
 
   if (updates.length === 0) {
     p.log.success('All submodules are up to date')
-    return
+    return true
   }
   p.log.info('Updates available:')
   for (const update of updates) {
@@ -391,6 +401,7 @@ async function checkUpdates() {
       p.log.message(`    - ${skill}`)
     }
   }
+  return true
 }
 
 function getExpectedSkillNames(): Set<string> {
@@ -427,69 +438,92 @@ function getExistingSkillNames(): string[] {
     .map(entry => entry.name)
 }
 
-/**
- * Confirm and remove "extra" items (submodules / skills) no longer referenced by
- * meta.ts. Returns 'removed' | 'skipped' | 'cancelled' | 'none'.
- */
-async function removeExtra(
-  spinner: Spinner,
-  kind: string,
-  items: string[],
-  skipPrompt: boolean,
-  describe: (item: string) => string,
-  remove: (item: string) => void | Promise<void>
-): Promise<'removed' | 'skipped' | 'cancelled' | 'none'> {
-  if (items.length === 0) return 'none'
+interface RemovalItem {
+  label: string
+  remove: () => void | Promise<void>
+}
+
+interface RemovalPlan {
+  kind: string
+  items: RemovalItem[]
+}
+
+interface RemovalResult {
+  status: 'completed' | 'cancelled' | 'failed'
+  hadItems: boolean
+  removed: string[]
+}
+
+/** Confirm and remove a group of items no longer referenced by meta.ts. */
+async function removeItems(spinner: Spinner, plan: RemovalPlan, skipPrompt: boolean): Promise<RemovalResult> {
+  const { kind, items } = plan
+  if (items.length === 0) return { status: 'completed', hadItems: false, removed: [] }
 
   p.log.warn(`Found ${items.length} ${kind} not in meta.ts:`)
-  for (const item of items) p.log.message(`  - ${describe(item)}`)
+  for (const item of items) p.log.message(`  - ${item.label}`)
 
   const shouldRemove = skipPrompt
     ? true
     : await p.confirm({ message: `Remove these extra ${kind}?`, initialValue: true })
-  if (p.isCancel(shouldRemove)) return 'cancelled'
-  if (!shouldRemove) return 'skipped'
+  if (p.isCancel(shouldRemove)) return { status: 'cancelled', hadItems: true, removed: [] }
+  if (!shouldRemove) return { status: 'completed', hadItems: true, removed: [] }
 
-  for (const item of items) {
-    await runStep(spinner, `Removing ${describe(item)}`, async () => remove(item))
+  const removed: string[] = []
+  for (const [index, item] of items.entries()) {
+    const ok = await runStep(spinner, `Removing ${item.label}`, async () => item.remove())
+    if (!ok) {
+      p.log.error(`Failed to remove: ${item.label}`)
+      if (removed.length > 0) p.log.message(`Already removed: ${removed.join(', ')}`)
+      const remaining = items.slice(index + 1).map(item => item.label)
+      if (remaining.length > 0) p.log.message(`Not attempted: ${remaining.join(', ')}`)
+      return { status: 'failed', hadItems: true, removed }
+    }
+    removed.push(item.label)
   }
-  return 'removed'
+  p.log.success(`Removed ${removed.length} ${kind}: ${removed.join(', ')}`)
+  return { status: 'completed', hadItems: true, removed }
 }
 
-async function cleanup(skipPrompt = false) {
+async function cleanup(skipPrompt = false): Promise<CommandResult> {
   const spinner = p.spinner()
 
-  // 1. Remove submodules not referenced by meta.ts
+  // Build both plans first, then execute them in order.
   const expectedSubmodulePaths = new Set(getAllProjects().map(p => p.path))
   const extraSubmodules = getSubmodulePaths().filter(path => !expectedSubmodulePaths.has(path))
-  const submodulesResult = await removeExtra(
-    spinner,
-    'submodule(s)',
-    extraSubmodules,
-    skipPrompt,
-    path => path,
-    path => removeSubmodule(path)
-  )
-  if (submodulesResult === 'cancelled') return
-
-  // 2. Remove skill output directories not referenced by meta.ts
   const expectedSkills = getExpectedSkillNames()
   const extraSkills = getExistingSkillNames().filter(name => !expectedSkills.has(name))
-  const skillsResult = await removeExtra(
-    spinner,
-    'skill(s)',
-    extraSkills,
-    skipPrompt,
-    name => `skills/${name}`,
-    name => rmSync(join(root, 'skills', name), { recursive: true, force: true })
-  )
-  if (skillsResult === 'cancelled') return
 
-  if (submodulesResult === 'none' && skillsResult === 'none') {
-    p.log.success('Everything is clean, no unused submodules or skills found')
-  } else if (submodulesResult === 'removed' || skillsResult === 'removed') {
-    p.log.success('Cleanup completed')
+  const plans: RemovalPlan[] = [
+    {
+      kind: 'submodule(s)',
+      items: extraSubmodules.map(path => ({ label: path, remove: () => removeSubmodule(path) })),
+    },
+    {
+      kind: 'skill(s)',
+      items: extraSkills.map(name => ({
+        label: `skills/${name}`,
+        remove: () => rmSync(join(root, 'skills', name), { recursive: true, force: true }),
+      })),
+    },
+  ]
+
+  let foundItems = false
+  let removedCount = 0
+  for (const plan of plans) {
+    const result = await removeItems(spinner, plan, skipPrompt)
+    if (result.status !== 'completed') return result.status
+    foundItems ||= result.hadItems
+    removedCount += result.removed.length
   }
+
+  if (!foundItems) {
+    p.log.success('Everything is clean, no unused submodules or skills found')
+  } else if (removedCount > 0) {
+    p.log.success('Cleanup completed')
+  } else {
+    p.log.info('Cleanup skipped; no items were removed')
+  }
+  return 'completed'
 }
 
 interface CommandDef {
@@ -497,7 +531,7 @@ interface CommandDef {
   title: string
   menuLabel: string
   hint: string
-  run: (skip: boolean) => Promise<void>
+  run: (skip: boolean) => Promise<CommandResult>
 }
 
 const COMMANDS: CommandDef[] = [
@@ -506,17 +540,18 @@ const COMMANDS: CommandDef[] = [
     title: 'Sync',
     menuLabel: 'Sync submodules',
     hint: 'Pull latest and sync Type 2 skills',
-    run: () => syncSubmodules(),
+    run: async () => ((await syncSubmodules()) ? 'completed' : 'failed'),
   },
   {
     name: 'init',
     title: 'Init',
     menuLabel: 'Init submodules',
-    hint: 'Add, cleanup, and sync — full setup',
+    hint: 'Add submodules and sync Type 2 skills',
     run: async skip => {
-      await cleanup(skip)
-      await initSubmodules(skip)
-      await syncSubmodules()
+      const result = await initSubmodules(skip)
+      if (result === 'cancelled') return 'cancelled'
+      if (result === 'failed') return 'failed'
+      return (await syncSubmodules()) ? 'completed' : 'failed'
     },
   },
   {
@@ -524,14 +559,19 @@ const COMMANDS: CommandDef[] = [
     title: 'Check',
     menuLabel: 'Check updates',
     hint: 'See available updates',
-    run: () => checkUpdates(),
+    run: async () => ((await checkUpdates()) ? 'completed' : 'failed'),
   },
   {
     name: 'cleanup',
     title: 'Cleanup',
     menuLabel: 'Cleanup',
     hint: 'Remove unused submodules and skills',
-    run: skip => cleanup(skip),
+    run: async skip => {
+      const result = await cleanup(skip)
+      if (result === 'cancelled') return 'cancelled'
+      if (result === 'failed') return 'failed'
+      return 'completed'
+    },
   },
 ]
 
@@ -544,8 +584,13 @@ async function main() {
   const matched = command ? COMMANDS.find(c => c.name === command) : undefined
   if (matched) {
     p.intro(`Skills Manager - ${matched.title}`)
-    await matched.run(skip)
-    p.outro('Done')
+    const result = await matched.run(skip)
+    if (result === 'cancelled') {
+      p.cancel('Cancelled')
+      return
+    }
+    if (result === 'failed') process.exitCode = 1
+    p.outro(result === 'failed' ? 'Failed' : 'Done')
     return
   }
 
@@ -569,8 +614,15 @@ async function main() {
   }
 
   const selected = COMMANDS.find(c => c.name === action)
-  if (selected) await selected.run(false)
-  p.outro('Done')
+  if (selected) {
+    const result = await selected.run(false)
+    if (result === 'cancelled') {
+      p.cancel('Cancelled')
+      return
+    }
+    if (result === 'failed') process.exitCode = 1
+    p.outro(result === 'failed' ? 'Failed' : 'Done')
+  }
 }
 
 main().catch(console.error)

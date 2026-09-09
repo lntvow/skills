@@ -79,13 +79,14 @@ You don't need to do anything about them unless being asked.
    }
    ```
 
-2. **Run sync script** to clone the submodule:
+2. **Run init script** to clone and initialize the submodule:
 
    ```bash
    pnpm run start init -y
    ```
 
-   This will clone the repository to `sources/{project}/`
+   This will clone and initialize the repository at `sources/{project}/`.
+   For a vendor project, run `pnpm run start sync` afterward to copy its skills.
 
 3. **Follow the generation guide** below to create the skills
 

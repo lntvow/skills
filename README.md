@@ -83,9 +83,10 @@ Fork this project to create your own customized skill collection.
 1. Fork or clone this repository
 2. Install dependencies: `pnpm install`
 3. Update `meta.ts` with your own projects and skill sources
-4. Run `pnpm start init` — this will init submodules and sync vendor skills
-5. Run `pnpm start cleanup` separately when you intentionally want to remove items no longer listed in `meta.ts`
-6. Ask your agent to `Generate skills for <project>` (recommended one at a time to manage token usage)
+4. Run `pnpm start init` — this will initialize submodules
+5. Run `pnpm start sync` — this will sync vendor skills
+6. Run `pnpm start cleanup` separately when you intentionally want to remove items no longer listed in `meta.ts`
+7. Ask your agent to `Generate skills for <project>` (recommended one at a time to manage token usage)
 
 See [AGENTS.md](./AGENTS.md) for detailed generation guidelines.
 

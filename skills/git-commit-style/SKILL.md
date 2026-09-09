@@ -1,6 +1,6 @@
 ---
 name: git-commit-style
-description: Draft commit messages that match a repository's written conventions and recent history, prioritizing the current author's style.
+description: Draft commit messages that follow repository conventions, using the current author's recent style when compatible.
 metadata:
   author: lntvow
   version: '2026.9.8'
@@ -74,11 +74,10 @@ Record only patterns supported by the repository or the user's own commits:
 
 Choose styles in this order:
 
-1. Explicit user instructions.
-2. Written repository conventions.
-3. The current user's own recent commits, when enough evidence exists.
-4. The repository's dominant recent style.
-5. A minimal Conventional Commit fallback when no reliable convention exists.
+1. Written repository conventions.
+2. The current user's own recent commits, when enough evidence exists.
+3. The repository's dominant recent style.
+4. A minimal fallback only when no reliable convention or history exists.
 
 If the author's history is sparse, combine it with the repository's recent
 style instead of overfitting to one commit.
@@ -91,7 +90,8 @@ style instead of overfitting to one commit.
   footer, casing, or punctuation pattern that the repository does not use.
 - Follow repository-specific length limits when documented. Otherwise prefer a
   concise subject (normally no more than 100 characters), no trailing period,
-  and body lines no longer than 100 characters.
+  and body/footer lines no longer than 100 characters each. Treat these as
+  per-line limits, not total body/footer limits.
 - Use lowercase and the standard types `build chore ci docs feat fix perf
   refactor revert style test` only as defaults when no project-specific style
   is inferable.

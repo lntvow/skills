@@ -24,12 +24,12 @@
     "version": "pnpm changelog && git add -A",
     "lint:eslint": "eslint --fix --cache",
     "lint:tsc": "tsc --noEmit",
-    "lint": "cli run lint:eslint lint:tsc",
+    "lint": "cli parallel lint:eslint lint:tsc",
     "start": "tsx scripts/cli.ts"
   },
   "devDependencies": {
     "@clack/prompts": "^1.8.0",
-    "@lntvow/cli": "^0.3.0",
+    "@lntvow/cli": "^0.2.0",
     "@lntvow/eslint-config": "^10.3.1",
     "@types/node": "^22.19.19",
     "eslint": "^10.10.0",

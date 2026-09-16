@@ -1,5 +1,5 @@
 # Generation Info
 
 - **Source:** `sources/skills-cli`
-- **Git SHA:** `87dc363`
-- **Generated:** 2026-06-05
+- **Git SHA:** `d6b37f6`
+- **Generated:** 2026-09-16

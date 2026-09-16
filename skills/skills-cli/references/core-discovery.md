@@ -28,25 +28,29 @@ The CLI searches for `SKILL.md` files in these directories within a repository:
 - `.cortex/skills/`
 - `.crush/skills/`
 - `.devin/skills/`
-- `.factory/skills/`
+- `agent/skills/`
 - `.forge/skills/`
+- `.fx/skills/`
 - `.goose/skills/`
+- `.grok/skills/`
 - `.hermes/skills/`
 - `.inferencesh/skills/`
 - `.jazz/skills/`
 - `.junie/skills/`
 - `.iflow/skills/`
-- `.kilocode/skills/`
+- `.kimchi/skills/`
 - `.kiro/skills/`
 - `.kode/skills/`
 - `.lingma/skills/`
 - `.mcpjam/skills/`
+- `.minimax/skills/`
 - `.vibe/skills/`
 - `.moxby/skills/`
 - `.mux/skills/`
 - `.openhands/skills/`
 - `.ona/skills/`
 - `.pi/skills/`
+- `.posit/assistant/skills/`
 - `.qoder/skills/`
 - `.qwen/skills/`
 - `.reasonix/skills/`
@@ -57,6 +61,7 @@ The CLI searches for `SKILL.md` files in these directories within a repository:
 - `.tinycloud/skills/`
 - `.trae/skills/`
 - `.windsurf/skills/`
+- `.zcode/skills/`
 - `.zencoder/skills/`
 - `.neovate/skills/`
 - `.pochi/skills/`
@@ -64,14 +69,15 @@ The CLI searches for `SKILL.md` files in these directories within a repository:
 
 ## Depth Rules
 
-- Each skill container directory is walked **one level deep** for flat layout: `skills/<name>/SKILL.md`
-- Walked **two levels deep** for catalog layout: `skills/<category>/<name>/SKILL.md`
-- A `SKILL.md` at the shallower level **shadows** anything nested below it
-- Use `--full-depth` to discover `SKILL.md` files outside standard container directories (e.g., `examples/`, `tests/`)
+- Each skill container directory is walked **up to three levels deep** (`DEFAULT_SKILL_CONTAINER_DEPTH = 3`)
+- Covers flat layout `skills/<name>/SKILL.md` and catalog layouts with one or two category levels: `skills/<category>/<name>/SKILL.md` and `skills/<category>/<category>/<name>/SKILL.md`
+- A `SKILL.md` at a shallower level **shadows** anything nested below it
+- Use `--full-depth` to discover `SKILL.md` files outside the container directories (e.g., `examples/`, `tests/`)
+- If nothing is found in the standard locations, the CLI falls back to a recursive search
 
 ## Plugin Manifest Discovery
 
-If `.claude-plugin/marketplace.json` or `.claude-plugin/plugin.json` exists, skills declared in those manifests are also discovered at their declared depth.
+If `.claude-plugin/marketplace.json` or `.claude-plugin/plugin.json` exists, skills declared in those manifests are also discovered at their declared depth. These declared paths are not limited by the normal depth-3 catalog walk. If standard locations produce no skills, the CLI performs a recursive fallback search.
 
 <!--
 Source references:

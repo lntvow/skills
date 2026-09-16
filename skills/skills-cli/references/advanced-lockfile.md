@@ -1,41 +1,40 @@
 ---
 name: advanced-lockfile
-description: Lock file internals — skills-lock.json, skillFolderHash, and update checking via GitHub Trees API.
+description: Lock file internals — global .skill-lock.json, project skills-lock.json, folder hashes, and how updates are detected.
 ---
 
-# Lock File & Update Checking
+# Lock Files & Update Checking
 
-## Lock File Location
+## Global Lock
 
-| Scope   | Path                          |
-| ------- | ----------------------------- |
-| Global  | `~/.agents/.skill-lock.json`  |
-| Project | `./skills-lock.json`          |
+| Scope  | Path                                                  |
+| ------ | ----------------------------------------------------- |
+| Global | `~/.agents/.skill-lock.json` (or `$XDG_STATE_HOME/skills/.skill-lock.json` when `XDG_STATE_HOME` is set) |
 
-## Lock File Format (v3)
+- Schema **version 3**. Reading an older version wipes it, so users must reinstall to repopulate the new format.
+- Key field: `skillFolderHash` — the GitHub tree SHA of the skill folder; changes when **any** file in the folder changes.
+- Other fields: `source`, `sourceType`, `sourceUrl`, `ref`, `skillPath`, `installedAt`, `updatedAt`, `pluginName`, `wellKnownDigest`.
 
-Key field: `skillFolderHash` — the GitHub tree SHA for the skill folder, used to detect changes.
+## Project Lock (`skills-lock.json`)
 
-If an older lock file version is read, it's wiped. Users must reinstall to populate the new format.
+Committed to version control. Schema **version 1**, intentionally timestamp-free and alphabetically sorted so parallel branches merge cleanly.
+
+- Key field: `computedHash` — SHA-256 computed from the skill folder's files **on disk** (the global lock uses the remote GitHub tree SHA instead).
+- Optional fields: `source`, `sourceUrl`, `ref`, `sourceType`, `skillPath`, `subagents` (Eve subagent targets), `wellKnownDigest`.
+- `npx skills experimental_install` reinstalls everything recorded here (see [core-manage](core-manage.md)).
 
 ## How Update Checking Works
 
-1. Reads lock file for installed skills
-2. Filters to GitHub-backed skills that have both `skillFolderHash` and `skillPath`
-3. Calls GitHub Trees API (`/git/trees/<branch>?recursive=1`) — tries `main`, then `master` fallback
-4. Auth token sourced from `GITHUB_TOKEN`, `GH_TOKEN`, or `gh auth token` (improves rate limits)
-5. Compares latest folder tree SHA with lock file `skillFolderHash`
-6. Mismatch → update available; `skills update` reinstalls via `skills add <source-tree-url> -g -y`
-
-## GitHub Rate Limits
-
-Unauthenticated GitHub API requests are limited to 60/hour (shared per IP). `skills update` and `skills check` need authentication to avoid `Failed to fetch tree` errors (5,000/hour authenticated).
-
-The CLI resolves tokens from: `GITHUB_TOKEN` → `GH_TOKEN` → `gh auth token`.
-
-Tokens need **no scopes** for public repos — a classic token with empty permissions is sufficient.
+1. Read the lock file for installed skills
+2. Filter to GitHub-backed skills that have both `skillFolderHash` and `skillPath`
+3. Fetch the current folder tree hash — anonymous GitHub API, then explicit `GITHUB_TOKEN`/`GH_TOKEN`, then `gh api` (see [advanced-sources](advanced-sources.md))
+4. Fall back to an authenticated Git clone when the API is unavailable or skill paths changed
+5. Compare the latest folder tree SHA with the locked `skillFolderHash`; a mismatch means an update is available
+6. `skills update` reinstalls the affected skills by invoking the CLI entrypoint directly (`node <repo>/bin/cli.mjs add <source-tree-url> -g -y`) to avoid nested npm exec/npx behavior
 
 <!--
 Source references:
 - https://github.com/vercel-labs/skills/blob/main/AGENTS.md
+- https://github.com/vercel-labs/skills/blob/main/src/skill-lock.ts
+- https://github.com/vercel-labs/skills/blob/main/src/local-lock.ts
 -->

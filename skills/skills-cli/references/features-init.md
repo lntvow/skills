@@ -15,6 +15,8 @@ npx skills init
 npx skills init my-skill
 ```
 
+With a name, the CLI creates `<name>/SKILL.md`; without one it writes `./SKILL.md` and uses the current directory name as the skill name. An existing `SKILL.md` is never overwritten.
+
 ## SKILL.md Format
 
 ```markdown
@@ -33,18 +35,7 @@ Instructions for the agent to follow when this skill is activated.
 - `name`: Unique identifier (lowercase, hyphens allowed)
 - `description`: Brief explanation of what the skill does and when to use it
 
-### Optional: Internal Skills
-
-```markdown
----
-name: my-internal-skill
-description: Hidden from normal discovery
-metadata:
-  internal: true
----
-```
-
-Set `INSTALL_INTERNAL_SKILLS=1` to reveal internal skills.
+Internal-skill visibility and `INSTALL_INTERNAL_SKILLS` are covered in [advanced-telemetry](advanced-telemetry.md).
 
 ## Skill Directory Structure
 

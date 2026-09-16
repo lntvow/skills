@@ -46,19 +46,6 @@ export async function initSubmodules(skipPrompt = false): Promise<CommandResult>
     return 'failed'
   }
 
-  for (const project of existingProjects) {
-    const configuredUrl = existingConfigs.get(project.path)?.url
-    if (configuredUrl !== project.url) {
-      p.log.warn(`Updating submodule URL: ${project.path}`)
-      p.log.message(`  configured: ${configuredUrl ?? '(missing)'}`)
-      p.log.message(`  expected:   ${project.url}`)
-      const ok = await runStep(spinner, `Updating submodule URL: ${project.name}`, () =>
-        execFileAsync('git', ['submodule', 'set-url', '--', project.path, project.url])
-      )
-      if (!ok) return 'failed'
-    }
-  }
-
   if (newProjects.length === 0) {
     p.log.info('All submodules already configured')
   } else {
@@ -104,6 +91,13 @@ export async function initSubmodules(skipPrompt = false): Promise<CommandResult>
     if (existingProjects.length > 0) {
       p.log.info(`Already configured: ${existingProjects.map(p => p.name).join(', ')}`)
     }
+  }
+
+  for (const project of existingProjects) {
+    const ok = await runStep(spinner, `Setting submodule URL: ${project.name}`, () =>
+      execFileAsync('git', ['submodule', 'set-url', '--', project.path, project.url])
+    )
+    if (!ok) return 'failed'
   }
 
   const ok = await runStep(spinner, 'Pulling submodule contents', () =>

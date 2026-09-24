@@ -31,7 +31,7 @@ Unopinionated but tilted toward modern stacks (TypeScript, ESM, Composition API)
 | vite       | Vite — config, plugins, asset handling, env variables, build, SSR     | [vitejs/vite](https://github.com/vitejs/vite)               |
 | vitest     | Vitest — test API, assertions, mocking, configuration, CLI            | [vitest-dev/vitest](https://github.com/vitest-dev/vitest)   |
 | vitepress  | VitePress — config, routing, markdown, theme, data loading            | [vuejs/vitepress](https://github.com/vuejs/vitepress)       |
-| pnpm       | pnpm — workspaces, catalogs, filtering, CLI, scripts                  | [pnpm/pnpm.io](https://github.com/pnpm/pnpm.io)             |
+| pnpm       | pnpm — config, workspaces, catalogs, filtering, settings, CLI         | [pnpm/pnpm.io](https://github.com/pnpm/pnpm.io)             |
 | unocss     | UnoCSS — configuration, rules, shortcuts, presets, icons, attributify | [unocss/unocss](https://github.com/unocss/unocss)           |
 
 ### Vendored Skills

@@ -1,5 +1,5 @@
 # Generation Info
 
 - **Source:** `sources/pnpm`
-- **Git SHA:** `a24260082b1487d10c93ba325522be0f11f0c521`
-- **Generated:** 2026-06-04
+- **Git SHA:** `e3bc12c916c3a778de213e1dacb892f66ef6b2e7`
+- **Generated:** 2026-09-24

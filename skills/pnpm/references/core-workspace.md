@@ -1,28 +1,29 @@
 ---
 name: core-workspace
-description: pnpm workspace configuration via pnpm-workspace.yaml — packages, workspace protocol, packageConfigs, and settings.
+description: pnpm workspaces — packages globs, the workspace: protocol, workspace settings, packageConfigs, and cycle handling.
 ---
 
-# Workspace Configuration
+# Workspaces
 
-pnpm uses `pnpm-workspace.yaml` at the repo root to define workspaces. This is where **all non-auth pnpm config** belongs (since v11).
+`pnpm-workspace.yaml` at the repo root defines the workspace. With the default settings (including the default `nodeLinker: isolated`) every project shares one root `pnpm-lock.yaml` and one root `node_modules`, with each project's dependencies symlinked into its own `node_modules` (see [settings-node-modules](settings-node-modules.md)).
 
 ## packages
 
-Define which directories contain workspace packages:
-
 ```yaml
 packages:
-  - 'packages/*'
-  - 'apps/*'
-  - '!**/test/**'
+  - 'my-app' # direct subdirectory
+  - 'packages/*' # one level below packages/
+  - 'components/**' # any depth
+  - '!**/test/**' # exclusion
 ```
 
-The root package is always included. If `packages` is omitted, only the root is in the workspace.
+- The **root package is always included**, even when custom globs are used.
+- Patterns may use a `./` prefix and repeat slashes: `./packages/*` ≡ `packages//*`; `!./packages/legacy` ≡ `!packages/legacy`.
+- `*` never matches a name starting with a dot, so `packages/*` skips `packages/.cache`.
+- Omitting `packages` puts only the root package in the workspace.
+- The workspace comes from `pnpm-workspace.yaml`, not from `package.json#workspaces`.
 
-## workspace: Protocol
-
-Pin dependencies to local workspace packages. Prevents accidentally installing from registry:
+## workspace: protocol
 
 ```json
 {
@@ -30,89 +31,58 @@ Pin dependencies to local workspace packages. Prevents accidentally installing f
     "foo": "workspace:*",
     "bar": "workspace:^",
     "baz": "workspace:~",
-    "qux": "workspace:^1.5.0"
+    "qux": "workspace:^1.5.0",
+    "alias": "workspace:foo@*",
+    "rel": "workspace:../foo"
   }
 }
 ```
 
-On publish (`pnpm publish` / `pnpm pack`), `workspace:` versions are replaced with the actual package version. A bare `workspace:` is equivalent to `workspace:*`.
+- Binds to the local project and **never falls back to the registry**: `workspace:2.0.0` fails when the local version does not match.
+- Bare `workspace:` ≡ `workspace:*`.
+- Replaced on `pnpm pack` / `pnpm publish`: `workspace:*`, `workspace:^`, `workspace:~` become the exact version, an explicit range (`workspace:^1.5.0`) stays a range, and aliases become `npm:foo@<version>`.
+- Only required for linking when `linkWorkspacePackages` is `false`.
 
-**Alias referencing**: `"bar": "workspace:foo@*"` — references `foo` under alias `bar`. Converts to `"bar": "npm:foo@1.0.0"` on publish.
+## Workspace settings
 
-**Relative path referencing**: `"foo": "workspace:../foo"` — resolved relative to the package.
+| Setting                       | Default    | Effect                                                                                                                                                       |
+| ----------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `linkWorkspacePackages`       | `false`    | `true` links directly declared local deps; `deep` also links them inside subdependencies. Plain transitive ranges still come from the registry otherwise.      |
+| `injectWorkspacePackages`     | `false`    | Hard-link local deps into the virtual store instead of symlinking them (the project-wide form of `dependenciesMeta.*.injected`).                              |
+| `dedupeInjectedDeps`          | `true`     | Deduplicate injected dependencies.                                                                                                                            |
+| `syncInjectedDepsAfterScripts`| —          | v10.5.0. List of script names after which injected copies are re-synced.                                                                                      |
+| `preferWorkspacePackages`     | `false`    | Prefer local versions when resolving a range (matters only when `saveWorkspaceProtocol` is off).                                                               |
+| `sharedWorkspaceLockfile`     | `true`     | Single root lockfile and a single shared root `node_modules` (still the `isolated` symlinked layout, not a hoisted one). `false` gives every project its own lockfile — required for per-project `overrides`/`hoist`/`modulesDir`. |
+| `saveWorkspaceProtocol`       | `rolling`  | What `pnpm add` writes: `rolling` + `savePrefix: ''` → `workspace:*`, `~` → `workspace:~`, `^` → `workspace:^`.                                                |
+| `includeWorkspaceRoot`        | `false`    | Include the root project in recursive commands.                                                                                                               |
+| `failIfNoMatch`               | `false`    | Fail when `--filter` matches nothing (CLI flag `--fail-if-no-match`).                                                                                         |
+| `ignoreWorkspaceCycles`       | `false`    | Warn instead of failing on cycles; cyclic members lose ordering guarantees.                                                                                    |
+| `disallowWorkspaceCycles`     | `false`    | Fail the install when the workspace contains cycles.                                                                                                           |
 
-## packageConfigs (v11+)
+Recursive command scope differs: `install`, `list`, `outdated`, `update`, `publish`, `pack`, `remove`, `rebuild`, `why` include the root project; `run`, `exec`, `test`, `add` exclude it unless `includeWorkspaceRoot: true`.
 
-Per-package configuration replacing `.npmrc` files:
+## packageConfigs (v11.0.0)
+
+Replaces per-project `.npmrc` files. Map form or pattern-rule array:
 
 ```yaml
 packageConfigs:
-  frontend-app:
+  'project-1':
     saveExact: true
-  backend-service:
+  - match: ['project-2', 'project-*']
     savePrefix: '~'
 ```
 
-Or with pattern matching:
+Settings that shape resolution or the `node_modules` layout (`overrides`, `hoist`, `modulesDir`, `saveExact`, `savePrefix`, and neighbours) apply per project only when `sharedWorkspaceLockfile: false`. With the default shared lockfile there is a single resolution, so pnpm reports the entries it ignored.
 
-```yaml
-packageConfigs:
-  - match: ['frontend-*', 'shared-ui']
-    saveExact: true
-    modulesDir: 'node_modules'
-```
+## Cycles
 
-## Key Workspace Settings
-
-Place these in `pnpm-workspace.yaml`:
-
-```yaml
-# Link workspace packages instead of downloading from registry
-linkWorkspacePackages: true # false | deep
-
-# Hard-link local deps instead of symlinking
-injectWorkspacePackages: false
-
-# Fail if --filter matches nothing
-failIfNoMatch: true
-```
-
-## overrides
-
-Force specific versions across the dependency graph (including peers):
-
-```yaml
-overrides:
-  foo: '^2.0.0' # override all versions of foo
-  bar@^2.1.0: '3.0.0' # only bar@^2.1.0
-  qar@1>zoo: '2' # override zoo under qar@1
-  foo@1.0.0>bar: '-' # remove bar from foo@1.0.0
-```
-
-## packageExtensions
-
-Extend missing package metadata (peerDependencies, etc.):
-
-```yaml
-packageExtensions:
-  react-redux:
-    peerDependencies:
-      react-dom: '*'
-  react-redux@1:
-    peerDependencies:
-      react-dom: '*'
-```
-
-## Key Points
-
-- All non-auth config goes in `pnpm-workspace.yaml`, not `.npmrc`
-- Use `workspace:*` to always reference the local version
-- `packageConfigs` replaces per-package `.npmrc` (v11+)
-- `overrides` affects the full dependency graph including peer deps
+Cycles between workspace projects make script ordering impossible. pnpm prints `There are cyclic workspace dependencies` and recursive runs fail with `ERR_PNPM_TASK_CYCLE`. Break the cycle, fail fast with `disallowWorkspaceCycles: true`, or accept unordered execution via `ignoreWorkspaceCycles: true`.
 
 <!--
 Source references:
-- https://pnpm.io/pnpm-workspace_yaml
 - https://pnpm.io/workspaces
 - https://pnpm.io/settings
+- https://pnpm.io/settings/cli
+- https://pnpm.io/workspace-task-orchestration
 -->

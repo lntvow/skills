@@ -1,0 +1,5 @@
+interface:
+  display_name: "LLM 定价"
+  short_description: "核对官方 API 单价，按用量对比 Token 费用"
+policy:
+  allow_implicit_invocation: false

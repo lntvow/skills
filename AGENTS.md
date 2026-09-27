@@ -36,6 +36,11 @@ For skills that are written by lntvow with his preferences, experience, tastes a
 
 You don't need to do anything about them unless being asked.
 
+Hand-written skills may opt out of implicit invocation. Keep these keys intact when editing — removing either silently re-enables auto-triggering in that client:
+
+- `SKILL.md` frontmatter: `disable-model-invocation: true` (VS Code, Claude Code)
+- `agents/openai.yaml`: `policy.allow_implicit_invocation: false` (ChatGPT, Codex)
+
 ## Repository Structure
 
 ```

@@ -58,9 +58,10 @@ Synced from external repositories that maintain their own skills.
 
 Authored by lntvow — personal workflow skills.
 
-| Skill            | Description                                                               |
-| ---------------- | ------------------------------------------------------------------------- |
-| git-commit-style | Generate commits matching a repo's git history style (current user first) |
+| Skill            | Description                                                                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| git-commit-style | Generate commits matching a repo's git history style (current user first)                                                                  |
+| llm-pricing      | Check official DeepSeek/OpenAI GPT API rates and compare token-based costs (cache, peak, tiers). Manual only — use `$llm-pricing` in Codex |
 
 ## FAQ
 

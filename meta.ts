@@ -72,9 +72,10 @@ export const vendors: Record<string, VendorSkillMeta> = {
 }
 
 /**
- * Type 3: 手写技能（放在 skills/ 目录下）
+ * Type 3: hand-written skills (placed under `skills/`)
  */
 export const manual: string[] = [
   'git-commit-style',
+  'llm-pricing',
   // 'my-preferences',
 ]

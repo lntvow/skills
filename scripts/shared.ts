@@ -1,9 +1,9 @@
 import * as p from '@clack/prompts'
 import { execFile as execFileCb, execFileSync } from 'node:child_process'
-import { existsSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, rmSync } from 'node:fs'
 import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { sources, vendors } from '../meta'
+import { categories, sources, vendors } from '../meta'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -121,6 +121,59 @@ export function getAllProjects(): Project[] {
   ]
 }
 
+/** Output skill name → its path relative to `skills/`. */
+const skillPaths: Record<string, string> = (() => {
+  const paths: Record<string, string> = {}
+
+  for (const [category, group] of Object.entries(categories)) {
+    for (const name of Object.keys(group.sources)) paths[name] = `${category}/${name}`
+    for (const name of group.manual) paths[name] = `${category}/${name}`
+
+    for (const [vendor, meta] of Object.entries(group.vendors)) {
+      const base = Object.keys(meta.skills).length > 1 ? `${category}/${vendor}` : category
+      for (const outputName of Object.values(meta.skills)) paths[outputName] = `${base}/${outputName}`
+    }
+  }
+
+  return paths
+})()
+
+/** Resolve the on-disk directory of an output skill: `skills/<category>/[/<vendor>]/<name>/`. */
+export function skillOutputDir(skillName: string): string {
+  const skillPath = skillPaths[skillName]
+  if (!skillPath) throw new Error(`Skill "${skillName}" is not registered in meta.ts`)
+  return join(root, 'skills', ...skillPath.split('/'))
+}
+
+/** Maximum category depth below `skills/` that the skills CLI discovers by default. */
+const MAX_SKILL_DEPTH = 3
+
+/** Directories the skills CLI does not descend into while searching for skills. */
+const SKIP_SKILL_DIRS = new Set(['node_modules', '.git', 'dist', 'build', '__pycache__'])
+
+/** List existing output skills under `skills/`, same depth rule as the skills CLI. */
+export function listOutputSkills(): { name: string; path: string }[] {
+  const skillsDir = join(root, 'skills')
+  if (!existsSync(skillsDir)) return []
+
+  const found: { name: string; path: string }[] = []
+  const walk = (dir: string, depth: number): void => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue
+
+      const dirPath = join(dir, entry.name)
+      if (existsSync(join(dirPath, 'SKILL.md'))) {
+        found.push({ name: entry.name, path: dirPath })
+        continue
+      }
+      if (depth < MAX_SKILL_DEPTH && !SKIP_SKILL_DIRS.has(entry.name)) walk(dirPath, depth + 1)
+    }
+  }
+
+  walk(skillsDir, 1)
+  return found
+}
+
 /** Get the commit SHA pinned in the superproject for a submodule. */
 export function getSubmodulePinnedSha(submodulePath: string): string | null {
   const line = execFileSafe('git', ['ls-tree', 'HEAD', submodulePath])
@@ -177,7 +230,7 @@ export async function planVendorSync(
     const sourceSkillPath = join(vendorSkillsPath, sourceSkillName)
     if (!existsSync(sourceSkillPath)) continue
 
-    const outputPath = join(root, 'skills', outputSkillName)
+    const outputPath = skillOutputDir(outputSkillName)
     const startSha = getSyncedSha(outputPath)
 
     if (!startSha) {

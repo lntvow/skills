@@ -22,8 +22,8 @@
 [submodule "vendor/vuejs-ai"]
 	path = vendor/vuejs-ai
 	url = https://github.com/vuejs-ai/skills
-[submodule "vendor/anthropics-skills"]
-	path = vendor/anthropics-skills
+[submodule "vendor/anthropics"]
+	path = vendor/anthropics
 	url = https://github.com/anthropics/skills
 [submodule "vendor/web-design-guidelines"]
 	path = vendor/web-design-guidelines
@@ -31,6 +31,6 @@
 [submodule "vendor/tsdown"]
 	path = vendor/tsdown
 	url = https://github.com/rolldown/tsdown
-[submodule "vendor/gsap-skills"]
-	path = vendor/gsap-skills
+[submodule "vendor/gsap"]
+	path = vendor/gsap
 	url = https://github.com/greensock/gsap-skills

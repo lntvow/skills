@@ -20,6 +20,8 @@ Learn more about CLI usage at [skills](https://github.com/vercel-labs/skills).
 
 ## Skills
 
+Every skill lives at `skills/<category>/<name>/`, with an optional extra level for upstream projects that ship several skills (`skills/frontend/gsap/gsap-core/`). Categories are `frontend`, `general` and `misc` (`backend` is reserved).
+
 ### Skills Generated from Official Documentation
 
 Unopinionated but tilted toward modern stacks (TypeScript, ESM, Composition API). Generated from official documentation with git submodules, using DeepSeek V4 Pro via GitHub Copilot.

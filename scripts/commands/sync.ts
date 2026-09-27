@@ -2,7 +2,15 @@ import * as p from '@clack/prompts'
 import { cpSync, existsSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { vendors } from '../../meta'
-import { execFileAsync, execFileSafeAsync, fetchAllSubmodules, planVendorSync, root, runStep } from '../shared'
+import {
+  execFileAsync,
+  execFileSafeAsync,
+  fetchAllSubmodules,
+  planVendorSync,
+  root,
+  runStep,
+  skillOutputDir,
+} from '../shared'
 
 const LICENSE_NAMES = ['LICENSE', 'LICENSE.md', 'LICENSE.txt', 'license', 'license.md', 'license.txt']
 
@@ -38,7 +46,7 @@ export async function syncSubmodules(): Promise<boolean> {
 
     for (const { sourceSkillName, outputSkillName } of pendingSkills) {
       const sourceSkillPath = join(vendorSkillsPath, sourceSkillName)
-      const outputPath = join(root, 'skills', outputSkillName)
+      const outputPath = skillOutputDir(outputSkillName)
 
       rmSync(outputPath, { recursive: true, force: true })
       cpSync(sourceSkillPath, outputPath, { recursive: true })

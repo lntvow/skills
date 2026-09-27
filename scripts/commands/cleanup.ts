@@ -1,36 +1,29 @@
 import * as p from '@clack/prompts'
-import { existsSync, readdirSync, rmSync } from 'node:fs'
-import { join } from 'node:path'
+import { rmSync } from 'node:fs'
+import { relative } from 'node:path'
 import { manual, sources, vendors } from '../../meta'
 import {
   type CommandResult,
   getAllProjects,
   getSubmodulePaths,
+  listOutputSkills,
   removeSubmodule,
   root,
   runStep,
+  skillOutputDir,
   type Spinner,
 } from '../shared'
 
-function getExpectedSkillNames(): Set<string> {
+function getExpectedSkillPaths(): Set<string> {
   const expected = new Set<string>()
 
-  for (const name of Object.keys(sources)) expected.add(name)
+  for (const name of Object.keys(sources)) expected.add(skillOutputDir(name))
   for (const config of Object.values(vendors)) {
-    for (const outputName of Object.values(config.skills)) expected.add(outputName)
+    for (const outputName of Object.values(config.skills)) expected.add(skillOutputDir(outputName))
   }
-  for (const name of manual) expected.add(name)
+  for (const name of manual) expected.add(skillOutputDir(name))
 
   return expected
-}
-
-function getExistingSkillNames(): string[] {
-  const skillsDir = join(root, 'skills')
-  if (!existsSync(skillsDir)) return []
-
-  return readdirSync(skillsDir, { withFileTypes: true })
-    .filter(entry => entry.isDirectory())
-    .map(entry => entry.name)
 }
 
 interface RemovalItem {
@@ -82,8 +75,8 @@ export async function cleanup(skipPrompt = false): Promise<CommandResult> {
   const spinner = p.spinner()
   const expectedSubmodulePaths = new Set(getAllProjects().map(project => project.path))
   const extraSubmodules = getSubmodulePaths().filter(path => !expectedSubmodulePaths.has(path))
-  const expectedSkills = getExpectedSkillNames()
-  const extraSkills = getExistingSkillNames().filter(name => !expectedSkills.has(name))
+  const expectedSkillPaths = getExpectedSkillPaths()
+  const extraSkills = listOutputSkills().filter(skill => !expectedSkillPaths.has(skill.path))
 
   const plans: RemovalPlan[] = [
     {
@@ -92,9 +85,9 @@ export async function cleanup(skipPrompt = false): Promise<CommandResult> {
     },
     {
       kind: 'skill(s)',
-      items: extraSkills.map(name => ({
-        label: `skills/${name}`,
-        remove: () => rmSync(join(root, 'skills', name), { recursive: true, force: true }),
+      items: extraSkills.map(skill => ({
+        label: relative(root, skill.path).replaceAll('\\', '/'),
+        remove: () => rmSync(skill.path, { recursive: true, force: true }),
       })),
     },
   ]

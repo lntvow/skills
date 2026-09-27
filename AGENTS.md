@@ -59,15 +59,17 @@ Hand-written skills may opt out of implicit invocation. Keep these keys intact w
 │           └── {skill-name}/   # Individual skills to sync
 │
 └── skills/                     # Output directory (generated or synced)
-    └── {output-name}/
-        ├── SKILL.md           # Index of all skills
-        ├── GENERATION.md       # Tracking metadata (for generated skills)
-        ├── SYNC.md             # Tracking metadata (for synced skills)
-        └── references/
-            └── *.md            # Individual skill files
+    └── {category}/             # Domain category — see `categories` in meta.ts
+        └── [{group}/]          # Optional level for multi-skill upstream projects
+            └── {output-name}/
+                ├── SKILL.md        # Index of all skills
+                ├── GENERATION.md   # Tracking metadata (for generated skills)
+                ├── SYNC.md         # Tracking metadata (for synced skills)
+                └── references/
+                    └── *.md        # Individual skill files
 ```
 
-**Important:** For Type 1 (generated), the `skills/{project}/` name must match `sources/{project}/`. For Type 2 (synced), the output name is configured in `meta.ts` and may differ from the source skill name.
+**Important:** Every output skill is registered in `meta.ts`, grouped by domain category. It lives at `skills/{category}/{output-name}/`, or `skills/{category}/{vendor}/{output-name}/` when that vendor ships more than one skill — that extra level is derived from the vendor key, not configured separately. Keep skills at most three levels below `skills/`, the depth the skills CLI discovers without `--full-depth`. For Type 1 (generated), `{output-name}` must match `sources/{project}/`. For Type 2 (synced), the output name is configured in `meta.ts` and may differ from the source skill name.
 
 ## Workflows
 
@@ -75,12 +77,17 @@ Hand-written skills may opt out of implicit invocation. Keep these keys intact w
 
 #### Adding a New Project
 
-1. **Add entry to `meta.ts`** in the `sources` object:
+1. **Add entry to `meta.ts`** in the `sources` object of the matching category:
 
    ```ts
-   export const sources = {
-     // ... existing entries
-     'new-project': 'https://github.com/org/repo',
+   export const categories = {
+     frontend: {
+       sources: {
+         // ... existing entries
+         'new-project': 'https://github.com/org/repo',
+       },
+       // vendors: { ... }, manual: [ ... ]
+     },
    }
    ```
 
@@ -105,9 +112,10 @@ Hand-written skills may opt out of implicit invocation. Keep these keys intact w
 - **Read** source docs from `sources/{project}/docs/`
 - **Read** the instructions in `instructions/{project}.md` for specific generation instructions if exists
 - **Understand** the documentation thoroughly
-- **Create** skill files in `skills/{project}/references/`
+- **Create** skill files in `skills/{category}/{project}/references/`
 - **Create** `SKILL.md` index listing all skills
 - **Create** `GENERATION.md` with the source git SHA
+- **Register** the skill under its domain category in `meta.ts` (`sources` / `vendors` / `manual`)
 
 #### Updating Generated Skills
 
@@ -124,7 +132,7 @@ Hand-written skills may opt out of implicit invocation. Keep these keys intact w
 
 #### Initial Sync
 
-1. **Copy** specified skills from `vendor/{project}/skills/{skill-name}/` to `skills/{output-name}/`
+1. **Copy** specified skills from `vendor/{project}/skills/{skill-name}/` to `skills/{category}/{output-name}/`, or `skills/{category}/{vendor}/{output-name}/` for a multi-skill vendor
 2. **Create** `SYNC.md` with the vendor git SHA
 
 #### Updating Synced Skills
@@ -134,7 +142,7 @@ Hand-written skills may opt out of implicit invocation. Keep these keys intact w
    cd vendor/{project}
    git diff {old-sha}..HEAD -- skills/{skill-name}/
    ```
-2. **Copy** changed files from `vendor/{project}/skills/{skill-name}/` to `skills/{output-name}/`
+2. **Copy** changed files from `vendor/{project}/skills/{skill-name}/` to `skills/{category}/{output-name}/`, or `skills/{category}/{vendor}/{output-name}/` for a multi-skill vendor
 3. **Update** `SYNC.md` with new SHA
 
 **Note:** Do NOT modify synced skills manually. Changes should be contributed upstream to the vendor project.

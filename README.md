@@ -64,6 +64,7 @@ Authored by lntvow — personal workflow skills.
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | git-commit-style | Generate commits matching a repo's git history style (current user first)                                                                  |
 | llm-pricing      | Check official DeepSeek/OpenAI GPT API rates and compare token-based costs (cache, peak, tiers). Manual only — use `$llm-pricing` in Codex |
+| turn-token-usage | Report per-turn token usage and prompt-cache hit rate from the DeepSeek V4 for Copilot extension log                                       |
 
 ## FAQ
 

@@ -89,7 +89,7 @@ export const categories: Record<string, CategoryMeta> = {
       'skills-cli': 'https://github.com/vercel-labs/skills',
     },
     vendors: {},
-    manual: ['llm-pricing'],
+    manual: ['llm-pricing', 'turn-token-usage'],
   },
   // Reserved placement: no skills yet.
   backend: {

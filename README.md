@@ -4,6 +4,8 @@ A curated collection of [Agent Skills](https://agentskills.io/home) focused on V
 
 > Template inspired by [antfu/skills](https://github.com/antfu/skills).
 
+<p align="center">English | <a href="https://github.com/lntvow/skills/blob/main/README.zh-CN.md">简体中文</a></p>
+
 ## Installation
 
 ```bash
@@ -60,11 +62,12 @@ Synced from external repositories that maintain their own skills.
 
 Authored by lntvow — personal workflow skills.
 
-| Skill            | Description                                                                                                                                |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| git-commit-style | Generate commits matching a repo's git history style (current user first)                                                                  |
-| llm-pricing      | Check official DeepSeek/OpenAI GPT API rates and compare token-based costs (cache, peak, tiers). Manual only — use `$llm-pricing` in Codex |
-| turn-token-usage | Report per-turn token usage and prompt-cache hit rate from the DeepSeek V4 for Copilot extension log                                       |
+| Skill                  | Description                                                                                                                                |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| git-commit-style       | Draft commit messages matching a repo's git history style (current user first)                                                             |
+| llm-pricing            | Check official DeepSeek/OpenAI GPT API rates and compare token-based costs (cache, peak, tiers). Manual only — use `$llm-pricing` in Codex |
+| speculative-defense    | Reject defensive code for conditions that never occur — evidence table, approval gate, guards only where external input arrives            |
+| multilingual-authoring | Write one version per language instead of translating between them — structure shared, wording native to each                              |
 
 ## FAQ
 

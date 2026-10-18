@@ -81,6 +81,8 @@ export const categories: Record<string, CategoryMeta> = {
     vendors: {},
     manual: [
       'git-commit-style',
+      'speculative-defense',
+      'multilingual-authoring',
       // 'my-preferences',
     ],
   },
@@ -89,7 +91,7 @@ export const categories: Record<string, CategoryMeta> = {
       'skills-cli': 'https://github.com/vercel-labs/skills',
     },
     vendors: {},
-    manual: ['llm-pricing', 'turn-token-usage'],
+    manual: ['llm-pricing'],
   },
   // Reserved placement: no skills yet.
   backend: {

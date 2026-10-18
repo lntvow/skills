@@ -149,11 +149,13 @@ Hand-written skills may opt out of implicit invocation. Keep these keys intact w
 
 #### ⚠️ After Any Skill Change
 
-After adding, updating, or removing skills (both Type 1 and Type 2), always check and update `README.md`:
+After adding, updating, or removing skills (both Type 1 and Type 2), always check and update **both** `README.md` and `README.zh-CN.md`:
 
-- **Added skills** → append rows to the appropriate table
-- **Removed skills** → delete rows from the table
-- **Updated skills** → review descriptions and links for accuracy
+- **Added skills** → append rows to the appropriate table in both files
+- **Removed skills** → delete rows from both tables
+- **Updated skills** → review descriptions and links for accuracy in both
+
+The two READMEs are hand-maintained translations of each other; a change that lands in only one of them is an incomplete change.
 
 ## File Formats
 
@@ -261,6 +263,14 @@ Source references:
 - {source-url}
 -->
 ```
+
+## Language
+
+- **`AGENTS.md`** — English.
+- **`README.md` + `README.zh-CN.md`** — a hand-maintained pair: change both together, and keep the switch links pointing at each other.
+- **Type 1 / Type 2 skills** — English only. Never translate them: translation breaks the diff on sync.
+- **Type 3 `SKILL.md` body** — Chinese. Keep English for anything matched or executed verbatim (identifiers, paths, commands, API terms like `try/catch`), and anchor abstract terms on first use: 举证（evidence）、非目标（non-goals）. Chinese abstraction is wider — 冗余 covers both duplicate code and defensive code.
+- **`description`** — mixed: the Chinese phrasings the author actually uses (「加固一下」「更健壮」「处理边界情况」) plus the literal tokens that appear in code (`try/catch`, `timeout`, `retry`, `null` fallback). Triggering matches both; either language alone misses half.
 
 ## Writing Guidelines
 

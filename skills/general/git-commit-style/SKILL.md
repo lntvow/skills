@@ -1,110 +1,71 @@
 ---
 name: git-commit-style
-description: Draft commit messages that follow repository conventions, using the current author's recent style when compatible.
+description: 照着仓库自己的习惯起草 commit message，优先用当前作者最近的写法。用户要写提交信息、要判断该用英文还是中文、要不要写正文、前缀用 `feat:` 还是 `JIRA-123` 时用它。只出文案，不执行 git commit。
 metadata:
   author: lntvow
-  version: '2026.9.8'
+  version: '2026.10.18'
 ---
 
-# Git Commit Style Match
+# 提交信息风格匹配
 
-Draft a commit message that looks native to the target repository. Analyze the
-actual proposed change first, then use repository rules and commit history to
-choose the message format.
+先看清楚这个仓库平时怎么写提交信息，再动笔。写出来要像这里的人写的，不像模板。
 
-This skill only drafts commit copy. Never run `git commit` or any equivalent
-mutation from this workflow; a separately authorized commit workflow may use
-the returned message later.
+这个技能只管出文案。别执行 `git commit`，也别 add、reset、restore——真要提交是另一件事。
 
-## 1) Resolve scope and repository rules
+## 1. 先搞清楚这次提交什么
 
-- Determine the target repository root from the current directory or the user's
-  explicit path.
-- Read relevant written conventions in `AGENTS.md`, `CONTRIBUTING.md`,
-  `.github/`, or documented release guidelines. Written repository rules take
-  precedence over inferred history.
-- Establish what would actually be committed:
+到仓库根目录，当前目录或用户给的路径都行。先看有没有明文规矩：`AGENTS.md`、`CONTRIBUTING.md`、`.github/` 里的模板。写明了的规矩，比从历史里猜出来的优先。
 
-  ```bash
-  git status --short
-  git diff --cached --stat
-  git diff --cached
-  ```
+再看实际改了什么：
 
-- Prefer the staged diff as the message scope. If nothing is staged, inspect
-  `git diff` and clearly treat the result as a draft for unstaged changes. Do
-  not include unrelated files or unstaged changes in a staged-commit message.
+```bash
+git status --short
+git diff --cached --stat
+git diff --cached
+```
 
-## 2) Identify the author's style
+有暂存内容就以暂存为准。没有暂存就看 `git diff`，并说明这是给未暂存改动写的草稿。别把不相干的文件算进去。
 
-Check the configured identity:
+## 2. 确认是谁在提交
 
 ```bash
 git config user.name
 git config user.email
 ```
 
-Use recent commit metadata to find the identity the user actually commits
-under; the configured identity and commit author may differ.
+配置里的身份和实际提交的作者可能不是同一个人，按最近提交的作者信息来判断。
 
-## 3) Sample representative history
-
-Inspect a useful batch of recent commits with full subjects and bodies:
+## 3. 翻一段历史
 
 ```bash
 git log --pretty=format:'%h%x09%an%x09%ae%x09%s%x09%b' -100
 ```
 
-- If the current branch is too short, add `--all`.
-- Weight the most recent 30–50 commits more heavily when conventions changed.
-- One or two commits are not enough to establish a style unless no more history
-  is available.
+分支太短就加 `--all`。规矩变过的话，最近三五十条更有参考价值。只有一两条提交不算样本，除非历史本来就这么点。
 
-## 4) Infer the message template
+## 4. 归纳出格式
 
-Record only patterns supported by the repository or the user's own commits:
+只记仓库或作者本人真用过的写法：
 
-- Prefix or type vocabulary, including custom forms such as `JIRA-123` or
-  `pkg:`.
-- Subject shape, scope syntax, separator, casing, and breaking-change marker.
-- Tone: imperative, past tense, or noun phrase.
-- Language, emoji usage, and typical subject length.
-- Body and footer conventions, including bullets, issue references, trailers,
-  and `BREAKING CHANGE:`.
+- 前缀和类型词表，包括 `JIRA-123`、`pkg:` 这类自定义的
+- 标题长什么样：有没有 scope、用什么分隔、大小写、破坏性变更有无标记
+- 语气：祈使句、过去时，还是名词短语
+- 语言、emoji、标题一般多长
+- 正文和 footer 的规矩：列不列点、引不引 issue、有没有 trailer、`BREAKING CHANGE:` 怎么写
 
-Choose styles in this order:
+顺序是：写明的规矩优先；没有就看当前作者自己最近的提交（样本够的话）；再不行看仓库近期主流风格；都没有，才退到最简写法。作者提交很少时，跟他所在仓库的近期风格合起来看，别只照一条提交学。
 
-1. Written repository conventions.
-2. The current user's own recent commits, when enough evidence exists.
-3. The repository's dominant recent style.
-4. A minimal fallback only when no reliable convention or history exists.
+## 5. 写完过一遍
 
-If the author's history is sparse, combine it with the repository's recent
-style instead of overfitting to one commit.
+- 说的是真实改动，不是复述文件名
+- 套的是刚归纳出来的格式，没加仓库里没出现过的类型、scope、标点
+- 标题短，一般不超过 100 字符，结尾不加句号；正文和 footer 每行也别超过 100 字符——这是逐行限制，不是整段
+- 没有可参考的项目风格时：小写，只用 `build` `chore` `ci` `docs` `feat` `fix` `perf` `refactor` `revert` `style` `test`
+- 需要背景才写正文，仓库平时写才写
+- 最后对着 diff 再读一遍
 
-## 5) Draft and validate
+结果放代码块里返回，然后就停。兜底写法或者某处歧义会实质影响结果时，后面补一句说明；否则别加评论。
 
-- Describe the real change in the selected scope; do not merely repeat a file
-  name or implementation detail.
-- Match the selected template exactly. Do not introduce a type, scope, body,
-  footer, casing, or punctuation pattern that the repository does not use.
-- Follow repository-specific length limits when documented. Otherwise prefer a
-  concise subject (normally no more than 100 characters), no trailing period,
-  and body/footer lines no longer than 100 characters each. Treat these as
-  per-line limits, not total body/footer limits.
-- Use lowercase and the standard types `build chore ci docs feat fix perf
-  refactor revert style test` only as defaults when no project-specific style
-  is inferable.
-- Add a body only when the change needs context or the repository commonly uses
-  bodies. Preserve the repository's blank-line, bullet, and footer conventions.
-- Re-read the final message against the actual diff and inferred template.
+## 边界
 
-Return the commit message as text, preferably in a fenced code block, and stop.
-If a fallback or an ambiguity materially affects the result, add one short note
-after the message; otherwise do not add commentary.
-
-## Safety boundary
-
-Do not create or amend commits, reset or restore files, stage files, or alter
-repository state. A request to draft a message is never permission to perform
-any of those operations.
+只出文案。不建提交、不改提交、不 reset、不 restore、不暂存、不动仓库状态。「帮我写个提交信息」不等于允许做这些。

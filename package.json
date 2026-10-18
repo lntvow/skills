@@ -19,7 +19,7 @@
     "upgrade": "cli upgrade -u -x \"@types/node,typescript\" && pnpm install",
     "tidy": "cli tidy",
     "commit": "git add -A && cli commit",
-    "release": "pnpm lint && git add -A && cli release package.json -a",
+    "release": "pnpm lint && git add -A && cli release -r -a",
     "changelog": "cli changelog -p angular -i CHANGELOG.md -s",
     "version": "pnpm changelog && git add -A",
     "lint:eslint": "eslint --fix --cache",
